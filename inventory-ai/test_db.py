@@ -1,5 +1,5 @@
 from app.db import Database
 
-db = Database("mysql+pymysql://root:@localhost/smallshop")
+db = Database("")
 
 print(db.get_product_by_id(1))

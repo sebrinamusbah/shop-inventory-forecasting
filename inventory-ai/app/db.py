@@ -44,6 +44,14 @@ class Database:
             logger.exception(f"fetch_one failed: {e}")
             raise
 
+    def execute(self, query: str, params: dict = None):
+        try:
+            with self.engine.begin() as conn:
+                conn.execute(text(query), params or {})
+        except Exception as e:
+            logger.exception(f"execute failed: {e}")
+            raise
+
     # =============================
     # DATE HANDLING
     # =============================
@@ -194,3 +202,118 @@ class Database:
             "total_sold_quantity",
             "is_active"
         ])
+
+    # =============================
+    # AI TABLE WRITES
+    # =============================
+    def replace_ai_prediction(
+        self,
+        product_id: int,
+        forecast_type: str,
+        predicted_demand: int,
+        confidence_score: float,
+        recommended_action: str,
+        forecast_start,
+        forecast_end
+    ):
+        delete_query = """
+        DELETE FROM ai_predictions
+        WHERE product_id = :product_id
+          AND forecast_type = :forecast_type
+          AND forecast_start = :forecast_start
+          AND forecast_end = :forecast_end
+        """
+
+        insert_query = """
+        INSERT INTO ai_predictions
+        (product_id, forecast_type, predicted_demand, confidence_score, recommended_action, forecast_start, forecast_end, created_at, updated_at)
+        VALUES (:product_id, :forecast_type, :predicted_demand, :confidence_score, :recommended_action, :forecast_start, :forecast_end, :created_at, :updated_at)
+        """
+
+        now = datetime.utcnow()
+
+        params = {
+            "product_id": product_id,
+            "forecast_type": forecast_type,
+            "predicted_demand": int(predicted_demand),
+            "confidence_score": confidence_score,
+            "recommended_action": recommended_action,
+            "forecast_start": forecast_start,
+            "forecast_end": forecast_end,
+            "created_at": now,
+            "updated_at": now
+        }
+
+        self.execute(delete_query, params)
+        self.execute(insert_query, params)
+
+    def insert_ai_insight(
+        self,
+        product_id,
+        insight_type: str,
+        message: str,
+        severity: str
+    ):
+        query = """
+        INSERT INTO ai_insights
+        (product_id, type, message, severity, created_at, updated_at)
+        VALUES (:product_id, :type, :message, :severity, :created_at, :updated_at)
+        """
+
+        now = datetime.utcnow()
+
+        self.execute(query, {
+            "product_id": product_id,
+            "type": insight_type,
+            "message": message,
+            "severity": severity,
+            "created_at": now,
+            "updated_at": now
+        })
+
+    def upsert_ai_snapshot(
+        self,
+        snapshot_date,
+        total_sales: float,
+        total_profit: float,
+        top_product_id,
+        low_stock_count: int,
+        sales_trend
+    ):
+        existing = self.fetch_one(
+            "SELECT id FROM ai_snapshots WHERE snapshot_date = :snapshot_date",
+            {"snapshot_date": snapshot_date}
+        )
+
+        now = datetime.utcnow()
+
+        if existing:
+            query = """
+            UPDATE ai_snapshots
+            SET total_sales = :total_sales,
+                total_profit = :total_profit,
+                top_product_id = :top_product_id,
+                low_stock_count = :low_stock_count,
+                sales_trend = :sales_trend,
+                updated_at = :updated_at
+            WHERE snapshot_date = :snapshot_date
+            """
+        else:
+            query = """
+            INSERT INTO ai_snapshots
+            (snapshot_date, total_sales, total_profit, top_product_id, low_stock_count, sales_trend, created_at, updated_at)
+            VALUES (:snapshot_date, :total_sales, :total_profit, :top_product_id, :low_stock_count, :sales_trend, :created_at, :updated_at)
+            """
+
+        params = {
+            "snapshot_date": snapshot_date,
+            "total_sales": total_sales,
+            "total_profit": total_profit,
+            "top_product_id": top_product_id,
+            "low_stock_count": low_stock_count,
+            "sales_trend": sales_trend,
+            "created_at": now,
+            "updated_at": now
+        }
+
+        self.execute(query, params)
