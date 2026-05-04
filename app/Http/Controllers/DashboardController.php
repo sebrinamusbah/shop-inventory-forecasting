@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http; // ✅ ADD THIS
 use Inertia\Inertia;
 use App\Models\Sale;
 use Carbon\Carbon;
@@ -14,6 +15,9 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
+        // =========================
+        // CORE BUSINESS DATA
+        // =========================
         $lowStockProducts = Product::whereColumn('current_quantity', '<=', 'min_stock_level')
             ->with('category')
             ->get();
@@ -22,32 +26,47 @@ class DashboardController extends Controller
             ->sum('total_amount');
 
         // =========================
-        // AI DATA
+        // AI SNAPSHOT (LATEST)
         // =========================
-
         $latestSnapshot = DB::table('ai_snapshots')
-            ->orderBy('id', 'desc')
+            ->orderByDesc('id')
             ->first();
 
+        // =========================
+        // AI PREDICTIONS (LATEST 10)
+        // =========================
         $latestPredictions = DB::table('ai_predictions')
-            ->join('products', 'ai_predictions.product_id', '=', 'products.id')
+            ->leftJoin('products', 'ai_predictions.product_id', '=', 'products.id')
             ->select(
                 'ai_predictions.*',
-                'products.name as product_name'
+                DB::raw('COALESCE(products.name, "Unknown") as product_name')
             )
-            ->orderBy('ai_predictions.id', 'desc')
+            ->orderByDesc('ai_predictions.id')
             ->limit(10)
             ->get();
 
+        // =========================
+        // AI INSIGHTS (LATEST 10)
+        // =========================
         $latestInsights = DB::table('ai_insights')
-            ->join('products', 'ai_insights.product_id', '=', 'products.id')
+            ->leftJoin('products', 'ai_insights.product_id', '=', 'products.id')
             ->select(
                 'ai_insights.*',
-                'products.name as product_name'
+                DB::raw('COALESCE(products.name, "Unknown") as product_name')
             )
-            ->orderBy('ai_insights.id', 'desc')
+            ->orderByDesc('ai_insights.id')
             ->limit(10)
             ->get();
+
+        // =========================
+        // SAFE FALLBACKS
+        // =========================
+        $aiSnapshot = $latestSnapshot ?? (object)[
+            'total_sales' => 0,
+            'total_profit' => 0,
+            'sales_trend' => 'stable',
+            'low_stock_count' => 0
+        ];
 
         return Inertia::render('Dashboard', [
             'auth' => [
@@ -60,24 +79,47 @@ class DashboardController extends Controller
                 ],
             ],
 
-            // =========================
-            // YOUR EXISTING DATA
-            // =========================
             'totalProducts' => Product::count(),
             'lowStockCount' => $lowStockProducts->count(),
             'lowStockProducts' => $lowStockProducts,
-
-            // =========================
-            // SALES DATA
-            // =========================
             'todaySales' => $todaySales,
 
-            // =========================
-            // AI DATA
-            // =========================
-            'aiSnapshot' => $latestSnapshot,
+            'aiSnapshot' => $aiSnapshot,
             'aiPredictions' => $latestPredictions,
             'aiInsights' => $latestInsights,
         ]);
+    }
+
+    // ==================================================
+    // 🚀 MANUAL AI RUN (ADD THIS PART)
+    // ==================================================
+    public function runAiManually($productId)
+    {
+        try {
+            $response = Http::timeout(120)->post(
+                env('AI_SERVICE_URL') . "/run-ai/{$productId}"
+            );
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'AI executed successfully',
+                    'data' => $response->json()
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'AI execution failed',
+                'error' => $response->body()
+            ], 500);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
