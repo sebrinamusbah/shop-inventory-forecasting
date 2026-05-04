@@ -64,13 +64,13 @@ class RiskEngine:
         # OUTPUT
         # -----------------------------
         return {
-            "product_id": product_id,
-            "product": product,
+    "product_id": product_id,
+    "product": product,
 
-            "risk_score": round(risk_score, 3),
-            "risk_level": risk_level,
+    "risk_score": round(risk_score, 3),
+    "risk_level": risk_level,
 
-            "stockout_risk": round(stockout_risk, 3),
-            "overstock_risk": round(overstock_risk, 3),
-            "confidence_risk": round(confidence_risk, 3)
-        }
+    "stockout_risk": round(stockout_risk, 3),
+    "overstock_risk": round(overstock_risk, 3),
+    "confidence_risk": round(confidence_risk, 3)
+}

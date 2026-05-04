@@ -15,12 +15,10 @@ if not os.path.exists(VENV_DIR):
 else:
     print("✅ Virtual environment already exists")
 
-# 2. Select correct python/pip
+# 2. Paths
 if platform.system() == "Windows":
-    pip_path = os.path.join(VENV_DIR, "Scripts", "pip.exe")
     python_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
 else:
-    pip_path = os.path.join(VENV_DIR, "bin", "pip")
     python_path = os.path.join(VENV_DIR, "bin", "python")
 
 # 3. Upgrade pip
@@ -32,7 +30,7 @@ requirements_file = os.path.join(BASE_DIR, "requirements.txt")
 
 if os.path.exists(requirements_file):
     print("📦 Installing dependencies...")
-    subprocess.check_call([pip_path, "install", "-r", requirements_file])
+    subprocess.check_call([python_path, "-m", "pip", "install", "-r", requirements_file])
 else:
     print("❌ requirements.txt not found!")
 

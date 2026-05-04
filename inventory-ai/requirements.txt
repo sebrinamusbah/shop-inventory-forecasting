@@ -9,3 +9,7 @@ holidays==0.95
 SQLAlchemy>=2.0
 PyMySQL>=1.1
 python-dotenv>=1.0
+apscheduler==3.11.2
+tzlocal==5.3.1
+fastapi>=0.110
+uvicorn>=0.27

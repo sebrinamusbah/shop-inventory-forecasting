@@ -103,7 +103,7 @@ class DecisionEngine:
             "target_stock": target_stock,
 
             # ⭐ MAIN OUTPUT
-            "recommended_purchase_qty": purchase_qty,
+            "recommended_order": purchase_qty,
 
             "confidence": confidence,
             "reason": "Forecast-based inventory planning"

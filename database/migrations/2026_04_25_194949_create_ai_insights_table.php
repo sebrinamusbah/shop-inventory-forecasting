@@ -6,31 +6,67 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-   public function up(): void
-{
-    Schema::create('ai_insights', function (Blueprint $table) {
-        $table->id();
+    public function up(): void
+    {
+        Schema::create('ai_insights', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('product_id')
-              ->nullable()
-              ->constrained()
-              ->nullOnDelete();
+            // ======================
+            // RELATION
+            // ======================
+            $table->foreignId('product_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
 
-        $table->enum('type', ['spike', 'drop', 'warning', 'opportunity']);
+            // ======================
+            // INSIGHT CLASSIFICATION
+            // ======================
+            $table->enum('type', [
+                'spike',
+                'drop',
+                'warning',
+                'opportunity'
+            ]);
 
-        $table->text('message');
+            $table->enum('severity', [
+                'low',
+                'medium',
+                'high'
+            ])->default('low');
 
-        $table->enum('severity', ['low', 'medium', 'high'])->default('low');
+            // ======================
+            // AI OUTPUT
+            // ======================
+            $table->text('message');
 
-        $table->timestamps();
-    });
-}
+            // explanation from AI (WHY this insight was generated)
+            $table->text('reasoning')->nullable();
 
-public function down(): void
-{
-    Schema::dropIfExists('ai_insights');
-}
+            // confidence score of this insight (0-1 or 0-100)
+            $table->decimal('confidence_score', 5, 2)->nullable();
+
+            // raw AI response (LLM or model output)
+            $table->json('ai_payload')->nullable();
+
+            // optional structured metadata (risk score, signals, etc.)
+            $table->json('metadata')->nullable();
+
+            // ======================
+            // TRACKING
+            // ======================
+            $table->string('model')->nullable(); // e.g. "prophet_v2", "gpt-4"
+            $table->timestamp('generated_at')->nullable();
+
+            $table->timestamps();
+
+            // helpful index for dashboard filtering
+            $table->index(['product_id', 'type']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ai_insights');
+    }
 };
