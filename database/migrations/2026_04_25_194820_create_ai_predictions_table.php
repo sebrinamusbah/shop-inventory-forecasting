@@ -19,24 +19,25 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             // ======================
-            // FORECAST INFO
+            // PRODUCT INFO (DENORMALIZED for speed)
             // ======================
-            $table->enum('forecast_type', ['7d', '30d', '90d']);
+            $table->string('product_name');
 
+            // ======================
+            // FORECAST OUTPUT
+            // ======================
             $table->integer('predicted_demand');
+            $table->integer('current_stock')->nullable();
 
             $table->decimal('confidence_score', 5, 2)->nullable();
 
-            // how accurate this prediction was (filled later)
-            $table->decimal('accuracy_score', 5, 2)->nullable();
+            // RESTOCK / HOLD / DROP
+            $table->string('recommended_action')->nullable();
 
-            // error margin of prediction
-            $table->decimal('error_margin', 8, 2)->nullable();
+            $table->decimal('risk_score', 5, 2)->nullable();
 
-            // ======================
-            // ACTIONS
-            // ======================
-            $table->text('recommended_action')->nullable();
+            // up / down / stable
+            $table->string('trend')->nullable();
 
             // ======================
             // TIME RANGE
@@ -44,32 +45,17 @@ return new class extends Migration
             $table->date('forecast_start');
             $table->date('forecast_end');
 
+           // ======================
+            // TIMESTAMP
             // ======================
-            // AI / ML METADATA
-            // ======================
-
-            // model used (Prophet, LSTM, etc.)
-            $table->string('model')->nullable();
-
-            // model version (important for tracking improvements)
-            $table->string('model_version')->nullable();
-
-            // raw prediction output (future-proofing)
-            $table->json('ai_payload')->nullable();
-
-            // explanation from AI (why prediction was made)
-            $table->text('explanation')->nullable();
-
-            // features used for prediction (optional but powerful for retraining)
-            $table->json('features_used')->nullable();
-
-            // when prediction was generated
-            $table->timestamp('generated_at')->nullable();
-
+            
             $table->timestamps();
-
-            // helpful index for analytics
-            $table->index(['product_id', 'forecast_type']);
+            // ======================
+            // INDEXES (important for dashboard speed)
+            // ======================
+            $table->index(['product_id']);
+            $table->index(['recommended_action']);
+            $table->index(['trend']);
         });
     }
 

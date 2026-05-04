@@ -26,7 +26,7 @@ class Database:
         logger.info("✅ Database connection initialized")
 
     # =============================
-    # CORE READ OPERATIONS
+    # CORE READ
     # =============================
     def fetch_all(self, query: str, params: dict = None):
         try:
@@ -55,18 +55,14 @@ class Database:
             raise
 
     # =============================
-    # CORE WRITE OPERATION (ONLY ONE)
+    # CORE WRITE
     # =============================
     def execute(self, query: str, params: dict = None):
-        """
-        INSERT / UPDATE / DELETE
-        """
         try:
             with self.engine.begin() as conn:
-                result = conn.execute(text(query), params or {})
+                conn.execute(text(query), params or {})
 
                 logger.info("execute successful")
-                return result
 
         except Exception as e:
             logger.exception(f"execute failed: {e}")
@@ -82,12 +78,13 @@ class Database:
         return [row["id"] for row in rows] if rows else []
 
     # =============================
-    # PRODUCT LOOKUP
+    # PRODUCT BY ID
     # =============================
     def get_product_by_id(self, product_id: int) -> Optional[Dict[str, Any]]:
         query = """
         SELECT 
-            id, name, sku, current_quantity,
+            id, name, sku,category_id,
+            current_quantity,
             unit_buy_price, unit_sell_price,
             min_stock_level, is_active,
             total_sold_quantity
@@ -104,14 +101,12 @@ class Database:
             "id": row["id"],
             "name": row["name"],
             "sku": row["sku"],
+            "category_id": row["category_id"] or "unknown",
             "current_quantity": int(row["current_quantity"] or 0),
             "unit_buy_price": float(row["unit_buy_price"] or 0),
             "unit_sell_price": float(row["unit_sell_price"] or 0),
             "min_stock_level": int(row["min_stock_level"] or 0),
-
-            # FIXED
             "is_active": bool(row["is_active"] or 0),
-
             "total_sold_quantity": int(row["total_sold_quantity"] or 0)
         }
 
@@ -163,21 +158,21 @@ class Database:
 
         rows = self.fetch_all(query)
 
-        df = pd.DataFrame(rows) if rows else pd.DataFrame(
+        return pd.DataFrame(rows) if rows else pd.DataFrame(
             columns=["id", "name", "current_quantity"]
         )
 
-        logger.info(f"Products loaded → {len(df)} rows")
-        return df
-
     # =============================
-    # FULL PRODUCTS TABLE
+    # FULL PRODUCTS
     # =============================
     def get_all_products_full(self):
 
         query = """
-        SELECT id, name, sku, current_quantity,
-               min_stock_level, total_sold_quantity, is_active
+        SELECT id, name, sku, category,
+               current_quantity,
+               min_stock_level,
+               total_sold_quantity,
+               is_active
         FROM products
         ORDER BY id DESC
         """
@@ -185,12 +180,13 @@ class Database:
         rows = self.fetch_all(query)
 
         return pd.DataFrame(rows) if rows else pd.DataFrame(columns=[
-            "id", "name", "sku", "current_quantity",
-            "min_stock_level", "total_sold_quantity", "is_active"
+            "id", "name", "sku", "category",
+            "current_quantity", "min_stock_level",
+            "total_sold_quantity", "is_active"
         ])
 
     # =============================
-    # AI SNAPSHOT UPSERT
+    # SNAPSHOT UPSERT (FIXED)
     # =============================
     def upsert_ai_snapshot(
         self,
@@ -220,6 +216,17 @@ class Database:
                 updated_at = :updated_at
             WHERE snapshot_date = :snapshot_date
             """
+
+            params = {
+                "snapshot_date": snapshot_date,
+                "total_sales": total_sales,
+                "total_profit": total_profit,
+                "top_product_id": top_product_id,
+                "low_stock_count": low_stock_count,
+                "sales_trend": sales_trend,
+                "updated_at": now
+            }
+
         else:
             query = """
             INSERT INTO ai_snapshots
@@ -231,15 +238,15 @@ class Database:
                     :created_at, :updated_at)
             """
 
-        params = {
-            "snapshot_date": snapshot_date,
-            "total_sales": total_sales,
-            "total_profit": total_profit,
-            "top_product_id": top_product_id,
-            "low_stock_count": low_stock_count,
-            "sales_trend": sales_trend,
-            "created_at": now,
-            "updated_at": now
-        }
+            params = {
+                "snapshot_date": snapshot_date,
+                "total_sales": total_sales,
+                "total_profit": total_profit,
+                "top_product_id": top_product_id,
+                "low_stock_count": low_stock_count,
+                "sales_trend": sales_trend,
+                "created_at": now,
+                "updated_at": now
+            }
 
         self.execute(query, params)

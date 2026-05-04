@@ -11,14 +11,12 @@ class InventoryScheduler:
         self.pipeline = pipeline
         self.db = db
 
-        # ONLY scheduler saves
         self.repo = AIRepository(db)
-
         self.scheduler = BackgroundScheduler()
         self.logger = logging.getLogger("InventoryScheduler")
 
     # =========================
-    # DEMO MODE (every X min)
+    # DEMO MODE
     # =========================
     def run_demo_ai(self):
 
@@ -29,21 +27,21 @@ class InventoryScheduler:
 
             for pid in product_ids:
 
-                # 1. RUN AI ONLY
                 context = self.pipeline.run(pid)
 
-                # 2. SAVE RESULTS HERE (ONLY PLACE)
-                self.repo.save_prediction(context)
-                self.repo.save_insight(context)
+                # ✅ SAVE CORRECT STRUCTURE
+                self.repo.save_prediction(context.prediction_result)
+                self.repo.save_insight(context.insight_result)
+                self.repo.save_alerts(context.alerts_result)
 
-                action = getattr(context.decision, "action", None)
+                action = context.decision.get("action") if isinstance(context.decision, dict) else None
                 self.logger.info(f"[DEMO] Product {pid} → {action}")
 
         except Exception as e:
             self.logger.error(f"Demo error: {e}")
 
     # =========================
-    # PRODUCTION DAILY SNAPSHOT
+    # DAILY SNAPSHOT
     # =========================
     def run_daily_snapshot(self):
 
@@ -55,19 +53,17 @@ class InventoryScheduler:
             total_sales = 0
             total_profit = 0
             low_stock_count = 0
+            critical_alerts_count = 0
             product_scores = []
 
             for pid in product_ids:
 
-                # 1. RUN AI ONLY
                 context = self.pipeline.run(pid)
 
-                forecast = context.forecast or {}
+                pred = context.prediction_result
 
-                metrics = forecast.get("metrics", {})
-                demand = metrics.get("predicted_demand", 0)
-
-                action = getattr(context.decision, "action", None)
+                demand = pred.get("predicted_demand", 0)
+                action = pred.get("recommended_action")
 
                 total_sales += demand
                 total_profit += demand * 0.25
@@ -77,11 +73,16 @@ class InventoryScheduler:
 
                 product_scores.append((pid, demand))
 
-                # 2. SAVE per-product AI results
-                self.repo.save_prediction(context)
-                self.repo.save_insight(context)
+                # optional: count critical alerts
+                for a in context.alerts_result:
+                    if a.get("priority") == "critical":
+                        critical_alerts_count += 1
 
-            # 3. SNAPSHOT CALCULATION
+                # SAVE PRODUCT LEVEL DATA
+                self.repo.save_prediction(pred)
+                self.repo.save_insight(context.insight_result)
+                self.repo.save_alerts(context.alerts_result)
+
             top_product_id = (
                 max(product_scores, key=lambda x: x[1])[0]
                 if product_scores else None
@@ -99,10 +100,12 @@ class InventoryScheduler:
                 "total_profit": total_profit,
                 "top_product_id": top_product_id,
                 "low_stock_count": low_stock_count,
-                "sales_trend": sales_trend
+                "out_of_stock_count": 0,
+                "sales_trend": sales_trend,
+                "total_predictions_count": len(product_ids),
+                "critical_alerts_count": critical_alerts_count
             }
 
-            # 4. SAVE SNAPSHOT (ONLY HERE)
             self.repo.save_snapshot(snapshot)
 
             self.logger.info("✅ Daily snapshot saved")
@@ -111,9 +114,9 @@ class InventoryScheduler:
             self.logger.error(f"Snapshot error: {e}")
 
     # =========================
-    # START DEMO MODE
+    # START DEMO
     # =========================
-    def start_interval(self, minutes=10):
+    def start_interval(self, minutes=5):
 
         self.scheduler.add_job(
             self.run_demo_ai,
@@ -128,7 +131,7 @@ class InventoryScheduler:
         self.logger.info(f"🚀 DEMO MODE → every {minutes} minutes")
 
     # =========================
-    # START PRODUCTION MODE
+    # START PRODUCTION
     # =========================
     def start_daily(self, run_hour=2):
 

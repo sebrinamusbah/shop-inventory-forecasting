@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -9,129 +9,146 @@ class AIRepository:
     def __init__(self, db):
         self.db = db
 
-    # ==================================================
-    # 1. SAVE PREDICTION
-    # ==================================================
-    def save_prediction(self, context, forecast_type="30d"):
+    # =========================
+    # 1. PREDICTIONS
+    # =========================
+    def save_prediction(self, prediction: dict):
 
         try:
-            forecast = context.forecast or {}
+            # ✅ SAFETY DEFAULTS (prevents DB crash)
+            forecast_start = prediction.get("forecast_start")
+            if not forecast_start:
+                forecast_start = date.today()
 
-            # supports BOTH formats safely
-            metrics = forecast.get("metrics") if isinstance(forecast.get("metrics"), dict) else {}
-
-            predicted_demand = (
-                metrics.get("predicted_demand")
-                or forecast.get("predicted_demand")
-                or 0
-            )
-
-            confidence = (
-                metrics.get("confidence_score")
-                or forecast.get("confidence_score")
-                or 0
-            )
-
-            action = getattr(context.decision, "action", None)
-
-            today = date.today()
+            forecast_end = prediction.get("forecast_end")
+            if not forecast_end:
+                forecast_end = date.today() + timedelta(days=7)
 
             query = """
             INSERT INTO ai_predictions
-            (product_id, forecast_type, predicted_demand, confidence_score,
-             recommended_action, forecast_start, forecast_end)
-            VALUES (:product_id, :forecast_type, :predicted_demand,
-                    :confidence_score, :recommended_action,
-                    :forecast_start, :forecast_end)
+            (product_id, product_name, predicted_demand, current_stock,
+             confidence_score, recommended_action, risk_score, trend,
+             forecast_start, forecast_end, generated_at)
+            VALUES (:product_id, :product_name, :predicted_demand, :current_stock,
+                    :confidence_score, :recommended_action, :risk_score, :trend,
+                    :forecast_start, :forecast_end, :generated_at)
             """
 
-            params = {
-                "product_id": context.product_id,
-                "forecast_type": forecast_type,
-                "predicted_demand": int(predicted_demand or 0),
-                "confidence_score": float(confidence or 0),
-                "recommended_action": action,
-                "forecast_start": today,
-                "forecast_end": today + timedelta(days=30)
-            }
+            self.db.execute(query, {
+                "product_id": prediction.get("product_id"),
+                "product_name": prediction.get("product_name"),
+                "predicted_demand": prediction.get("predicted_demand", 0),
+                "current_stock": prediction.get("current_stock", 0),
+                "confidence_score": prediction.get("confidence_score", 0),
+                "recommended_action": prediction.get("recommended_action"),
+                "risk_score": prediction.get("risk_score", 0),
+                "trend": prediction.get("trend", "stable"),
 
-            self.db.execute(query, params)
+                "forecast_start": forecast_start,
+                "forecast_end": forecast_end,
+                "generated_at": datetime.utcnow()
+            })
 
-            logger.info(f"✅ Prediction saved for product {context.product_id}")
+            logger.info("✅ Prediction saved successfully")
 
         except Exception:
             logger.exception("❌ save_prediction failed")
 
-    # ==================================================
-    # 2. SAVE INSIGHT
-    # ==================================================
-    def save_insight(self, context):
+    # =========================
+    # 2. INSIGHTS
+    # =========================
+    def save_insight(self, insight: dict):
 
         try:
-            message = context.explanation or "No explanation available"
-
-            risk_score = getattr(context.risk, "risk_score", 0) or 0
-
-            if risk_score > 0.4:
-                severity = "high"
-            elif risk_score > 0.25:
-                severity = "medium"
-            else:
-                severity = "low"
-
-            action = getattr(context.decision, "action", None)
-
-            if action == "RESTOCK":
-                insight_type = "opportunity"
-            elif action == "DROP":
-                insight_type = "drop"
-            else:
-                insight_type = "warning"
-
             query = """
             INSERT INTO ai_insights
-            (product_id, type, message, severity)
-            VALUES (:product_id, :type, :message, :severity)
+            (product_id, product_name, message, insight_type,
+             severity, reason_summary, created_at)
+            VALUES (:product_id, :product_name, :message, :insight_type,
+                    :severity, :reason_summary, :created_at)
             """
 
-            params = {
-                "product_id": context.product_id,
-                "type": insight_type,
-                "message": message,
-                "severity": severity
-            }
+            self.db.execute(query, {
+                "product_id": insight.get("product_id"),
+                "product_name": insight.get("product_name"),
+                "message": insight.get("message"),
+                "insight_type": insight.get("insight_type"),
+                "severity": insight.get("severity"),
+                "reason_summary": insight.get("reason_summary"),
+                "created_at": datetime.utcnow()
+            })
 
-            self.db.execute(query, params)
-
-            logger.info(f"💡 Insight saved for product {context.product_id}")
+            logger.info("💡 Insight saved successfully")
 
         except Exception:
             logger.exception("❌ save_insight failed")
 
-    # ==================================================
-    # 3. SAVE SNAPSHOT
-    # ==================================================
-    def save_snapshot(self, snapshot_data: dict):
+    # =========================
+    # 3. ALERTS
+    # =========================
+    def save_alerts(self, alerts: list):
+
+        try:
+            query = """
+            INSERT INTO ai_alerts
+            (product_id, product_name, alert_message,
+             alert_type, priority, is_resolved, created_at)
+            VALUES (:product_id, :product_name, :alert_message,
+                    :alert_type, :priority, :is_resolved, :created_at)
+            """
+
+            for alert in alerts:
+
+                self.db.execute(query, {
+                    "product_id": alert.get("product_id"),
+                    "product_name": alert.get("product_name"),
+                    "alert_message": alert.get("alert_message"),
+                    "alert_type": alert.get("alert_type"),
+                    "priority": alert.get("priority", "low"),
+                    "is_resolved": False,
+                    "created_at": datetime.utcnow()
+                })
+
+            logger.info("🚨 Alerts saved successfully")
+
+        except Exception:
+            logger.exception("❌ save_alerts failed")
+
+    # =========================
+    # 4. SNAPSHOT
+    # =========================
+    def save_snapshot(self, snapshot: dict):
 
         try:
             query = """
             INSERT INTO ai_snapshots
             (snapshot_date, total_sales, total_profit,
-             top_product_id, low_stock_count, sales_trend)
+             top_product_id, top_product_name,
+             low_stock_count, out_of_stock_count,
+             sales_trend, total_predictions_count,
+             critical_alerts_count, created_at)
             VALUES (:snapshot_date, :total_sales, :total_profit,
-                    :top_product_id, :low_stock_count, :sales_trend)
+                    :top_product_id, :top_product_name,
+                    :low_stock_count, :out_of_stock_count,
+                    :sales_trend, :total_predictions_count,
+                    :critical_alerts_count, :created_at)
             """
 
-            params = {
+            self.db.execute(query, {
+                # ✅ safer than datetime if column is DATE
                 "snapshot_date": date.today(),
-                "total_sales": float(snapshot_data.get("total_sales", 0)),
-                "total_profit": float(snapshot_data.get("total_profit", 0)),
-                "top_product_id": snapshot_data.get("top_product_id"),
-                "low_stock_count": int(snapshot_data.get("low_stock_count", 0)),
-                "sales_trend": snapshot_data.get("sales_trend", "stable")
-            }
 
-            self.db.execute(query, params)
+                "total_sales": snapshot.get("total_sales", 0),
+                "total_profit": snapshot.get("total_profit", 0),
+                "top_product_id": snapshot.get("top_product_id"),
+                "top_product_name": snapshot.get("top_product_name"),
+                "low_stock_count": snapshot.get("low_stock_count", 0),
+                "out_of_stock_count": snapshot.get("out_of_stock_count", 0),
+                "sales_trend": snapshot.get("sales_trend", "stable"),
+                "total_predictions_count": snapshot.get("total_predictions_count", 0),
+                "critical_alerts_count": snapshot.get("critical_alerts_count", 0),
+                "created_at": datetime.utcnow()
+            })
 
             logger.info("📊 Snapshot saved successfully")
 

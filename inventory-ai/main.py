@@ -41,8 +41,8 @@ def main():
     # MODE SWITCH
     # =============================
     if MODE == "demo":
-        scheduler.start_interval(minutes=10)
-        print("🚀 DEMO MODE → every 10 minutes")
+        scheduler.start_interval(minutes=5)
+        print("🚀 DEMO MODE → every 5 minutes")
 
     else:
         scheduler.start_daily(run_hour=2)
@@ -50,7 +50,7 @@ def main():
 
     try:
         while True:
-            time.sleep(10)
+            time.sleep(5)
 
     except KeyboardInterrupt:
         scheduler.stop()

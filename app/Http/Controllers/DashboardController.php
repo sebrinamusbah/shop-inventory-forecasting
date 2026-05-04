@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http; // ✅ ADD THIS
-use Inertia\Inertia;
 use App\Models\Sale;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Inertia\Inertia;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // =========================
-        // CORE BUSINESS DATA
+        // BUSINESS DATA
         // =========================
         $lowStockProducts = Product::whereColumn('current_quantity', '<=', 'min_stock_level')
             ->with('category')
@@ -28,46 +28,65 @@ class DashboardController extends Controller
         // =========================
         // AI SNAPSHOT (LATEST)
         // =========================
-        $latestSnapshot = DB::table('ai_snapshots')
+        $aiSnapshot = DB::table('ai_snapshots')
             ->orderByDesc('id')
             ->first();
 
+        // fallback safety
+        $aiSnapshot = $aiSnapshot ?? (object)[
+            'total_sales' => 0,
+            'total_profit' => 0,
+            'sales_trend' => 'stable',
+            'low_stock_count' => 0,
+            'out_of_stock_count' => 0,
+            'top_product_id' => null,
+            'top_product_name' => null,
+            'total_predictions_count' => 0,
+            'critical_alerts_count' => 0,
+        ];
+
         // =========================
-        // AI PREDICTIONS (LATEST 10)
+        // AI PREDICTIONS
         // =========================
-        $latestPredictions = DB::table('ai_predictions')
+        $aiPredictions = DB::table('ai_predictions')
             ->leftJoin('products', 'ai_predictions.product_id', '=', 'products.id')
             ->select(
                 'ai_predictions.*',
                 DB::raw('COALESCE(products.name, "Unknown") as product_name')
             )
             ->orderByDesc('ai_predictions.id')
-            ->limit(10)
+            ->limit(20)
             ->get();
 
         // =========================
-        // AI INSIGHTS (LATEST 10)
+        // AI INSIGHTS
         // =========================
-        $latestInsights = DB::table('ai_insights')
+        $aiInsights = DB::table('ai_insights')
             ->leftJoin('products', 'ai_insights.product_id', '=', 'products.id')
             ->select(
                 'ai_insights.*',
                 DB::raw('COALESCE(products.name, "Unknown") as product_name')
             )
             ->orderByDesc('ai_insights.id')
-            ->limit(10)
+            ->limit(20)
             ->get();
 
         // =========================
-        // SAFE FALLBACKS
+        // AI ALERTS (IMPORTANT)
         // =========================
-        $aiSnapshot = $latestSnapshot ?? (object)[
-            'total_sales' => 0,
-            'total_profit' => 0,
-            'sales_trend' => 'stable',
-            'low_stock_count' => 0
-        ];
+        $aiAlerts = DB::table('ai_alerts')
+            ->leftJoin('products', 'ai_alerts.product_id', '=', 'products.id')
+            ->select(
+                'ai_alerts.*',
+                DB::raw('COALESCE(products.name, "Unknown") as product_name')
+            )
+            ->orderByDesc('ai_alerts.id')
+            ->limit(20)
+            ->get();
 
+        // =========================
+        // RETURN TO UI
+        // =========================
         return Inertia::render('Dashboard', [
             'auth' => [
                 'user' => [
@@ -79,20 +98,23 @@ class DashboardController extends Controller
                 ],
             ],
 
+            // BUSINESS
             'totalProducts' => Product::count(),
             'lowStockCount' => $lowStockProducts->count(),
             'lowStockProducts' => $lowStockProducts,
             'todaySales' => $todaySales,
 
+            // AI SYSTEM
             'aiSnapshot' => $aiSnapshot,
-            'aiPredictions' => $latestPredictions,
-            'aiInsights' => $latestInsights,
+            'aiPredictions' => $aiPredictions,
+            'aiInsights' => $aiInsights,
+            'aiAlerts' => $aiAlerts,
         ]);
     }
 
-    // ==================================================
-    // 🚀 MANUAL AI RUN (ADD THIS PART)
-    // ==================================================
+    // =========================
+    // MANUAL AI RUN
+    // =========================
     public function runAiManually($productId)
     {
         try {

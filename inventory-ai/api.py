@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from app.db import Database
 from app.prophet_engine import ProphetEngine
 from app.ai.engines.decision_engine import DecisionEngine
@@ -32,15 +32,33 @@ repo = AIRepository(db)
 @app.post("/run-ai/{product_id}")
 def run_ai(product_id: int):
 
-    # 1. RUN AI
-    context = pipeline.run(product_id)
+    try:
+        # =====================
+        # 1. RUN AI PIPELINE
+        # =====================
+        context = pipeline.run(product_id)
 
-    # 2. SAVE TO MYSQL
-    repo.save_prediction(context)
-    repo.save_insight(context)
+        # =====================
+        # 2. SAVE RESULTS
+        # =====================
+        repo.save_prediction(context.prediction_result)
+        repo.save_insight(context.insight_result)
 
-    return {
-        "status": "success",
-        "product_id": product_id,
-        "action": getattr(context.decision, "action", None)
-    }
+        if hasattr(context, "alerts_result") and context.alerts_result:
+            repo.save_alerts(context.alerts_result)
+
+        # =====================
+        # RESPONSE
+        # =====================
+        return {
+            "status": "success",
+            "product_id": product_id,
+            "action": context.decision.get("action") if isinstance(context.decision, dict) else None,
+            "risk_score": context.risk.get("risk_score") if isinstance(context.risk, dict) else None,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI execution failed: {str(e)}"
+        )

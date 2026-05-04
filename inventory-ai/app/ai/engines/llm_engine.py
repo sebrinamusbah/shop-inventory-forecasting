@@ -42,11 +42,12 @@ class ExplanationEngine:
     # CONTEXT BUILDER (IMPORTANT)
     # -----------------------------
     def _build_context(self, forecast: Dict, decision: Dict) -> Dict:
+        product = forecast.get("product") or {}
         return {
-            "product_id": forecast.get("product_id"),
-            "demand": forecast.get("predicted_demand", 0),
-            "stock": forecast.get("current_stock", 0),
-            "confidence": float(forecast.get("confidence_score", 0)),
+            "product_id": forecast.get("product_id") or product.get("id"),
+            "demand": forecast.get("predicted_demand", 0) or forecast.get("metrics", {}).get("predicted_demand", 0),
+            "stock": forecast.get("current_stock", 0) or product.get("current_stock", 0),
+            "confidence": float(forecast.get("confidence_score", 0) or forecast.get("metrics", {}).get("confidence_score", 0)),
             "action": decision.get("action"),
             "recommended_order": decision.get("recommended_order", 0),
             "reason": decision.get("reason", "Model-based decision")

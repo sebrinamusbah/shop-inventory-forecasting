@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('snapshot_date');
 
             // ======================
-            // CORE BUSINESS METRICS
+            // BUSINESS METRICS
             // ======================
             $table->decimal('total_sales', 12, 2)->default(0);
             $table->decimal('total_profit', 12, 2)->default(0);
@@ -27,32 +27,28 @@ return new class extends Migration
                 ->constrained('products')
                 ->nullOnDelete();
 
+            // optional but useful (denormalized)
+            $table->string('top_product_name')->nullable();
+
             $table->integer('low_stock_count')->default(0);
 
+            // optional upgrade
+            $table->integer('out_of_stock_count')->default(0);
+
+            // up / down / stable
             $table->enum('sales_trend', ['up', 'down', 'stable'])->nullable();
 
-            // ======================
-            // AI METADATA (IMPORTANT)
-            // ======================
-
-            // model used for generating snapshot (Prophet, LSTM, etc.)
-            $table->string('model')->nullable();
-
-            // confidence of overall snapshot prediction
-            $table->decimal('confidence_score', 5, 2)->nullable();
-
-            // full raw AI output (flexible future-proof storage)
-            $table->json('ai_payload')->nullable();
-
-            // optional notes from AI system / explanation
-            $table->text('insight_summary')->nullable();
+            // extra analytics
+            $table->integer('total_predictions_count')->default(0);
+            $table->integer('critical_alerts_count')->default(0);
 
             // ======================
-            // AUDIT / TRACKING
+            // TIMESTAMP
             // ======================
+            
             $table->timestamps();
 
-            // prevent duplicate snapshots per day
+            // prevent duplicate daily snapshot
             $table->unique('snapshot_date');
         });
     }
