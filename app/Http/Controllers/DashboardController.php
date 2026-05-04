@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Inertia\Inertia;
+use App\Models\Sale;
+use Carbon\Carbon;
+
 
 class DashboardController extends Controller
 {
@@ -14,6 +17,8 @@ class DashboardController extends Controller
         $lowStockProducts = Product::whereColumn('current_quantity', '<=', 'min_stock_level')
             ->with('category')
             ->get();
+            $todaySales = Sale::whereDate('sale_date', Carbon::today())
+    ->sum('total_amount');
 
         return Inertia::render('Dashboard', [
             'auth' => [
@@ -23,12 +28,15 @@ class DashboardController extends Controller
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->toArray(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+
                 ],
             ],
 
             'totalProducts' => Product::count(),
             'lowStockCount' => $lowStockProducts->count(),
             'lowStockProducts' => $lowStockProducts,
+                'todaySales' => $todaySales, 
+
         ]);
     }
 }
