@@ -1,0 +1,178 @@
+[1mdiff --git a/app/Http/Controllers/SaleController.php b/app/Http/Controllers/SaleController.php[m
+[1mindex 72c1cc2..b46b18d 100644[m
+[1m--- a/app/Http/Controllers/SaleController.php[m
+[1m+++ b/app/Http/Controllers/SaleController.php[m
+[36m@@ -8,104 +8,96 @@[m
+ use Illuminate\Http\Request;[m
+ use Illuminate\Support\Facades\DB;[m
+ use Inertia\Inertia;[m
+[32m+[m[32muse App\Models\Category;[m
+ [m
+ class SaleController extends Controller[m
+ {[m
+[31m-   public function index()[m
+[31m-{[m
+[31m-    $sales = Sale::select([[m
+[31m-            'id',[m
+[31m-            'user_id',[m
+[31m-            'customer_name',[m
+[31m-            'customer_phone',[m
+[31m-            'payment_method',[m
+[31m-            'status',[m
+[31m-            'total_amount',[m
+[31m-            'created_at',[m
+[31m-        ])[m
+[31m-        ->with(['employee', 'items.product'])[m
+[31m-        ->latest()[m
+[31m-        ->paginate(15);[m
+[31m-[m
+[31m-    return Inertia::render('Sale/Index', [[m
+[31m-        'sales' => $sales,[m
+[31m-    ]);[m
+[31m-}[m
+[31m-    public function create()[m
+[32m+[m[32m    public function index()[m
+     {[m
+[31m-        $products = Product::where('current_quantity', '>', 0)[m
+[31m-            ->where('is_active', true)[m
+[31m-            ->select('id', 'name', 'unit_sell_price', 'current_quantity')[m
+[31m-            ->get();[m
+[32m+[m[32m        $sales = Sale::with(['employee', 'items.product'])[m
+[32m+[m[32m            ->latest()[m
+[32m+[m[32m            ->paginate(15);[m
+ [m
+[31m-        return Inertia::render('Sale/Create', [[m
+[31m-            'products' => $products[m
+[32m+[m[32m        return Inertia::render('Sale/Index', [[m
+[32m+[m[32m            'sales' => $sales,[m
+         ]);[m
+     }[m
+ [m
+[31m-    public function store(Request $request)[m
+[31m-    {[m
+[31m-        $validated = $request->validate([[m
+[31m-            'customer_name' => 'required|string|max:255',[m
+[31m-            'customer_phone' => 'nullable|string|max:20',[m
+[31m-            'payment_method' => 'required|in:cash,cbe,other_bank,telebirr',[m
+[31m-            'items' => 'required|array|min:1',[m
+[31m-            'items.*.product_id' => 'required|integer|exists:products,id',[m
+[31m-            'items.*.quantity' => 'required|integer|min:1',[m
+[31m-            'items.*.unit_price' => 'required|numeric|min:0',[m
+[32m+[m[32mpublic function create()[m
+[32m+[m[32m{[m
+[32m+[m[32m    $products = Product::where('current_quantity', '>', 0)[m
+[32m+[m[32m        ->where('is_active', true)[m
+[32m+[m[32m        ->select('id', 'name', 'unit_sell_price', 'current_quantity', 'category_id')[m
+[32m+[m[32m        ->get();[m
+[32m+[m
+[32m+[m[32m    $categories = Category::select('id', 'name')->get();[m
+[32m+[m
+[32m+[m[32m    return Inertia::render('Sale/Create', [[m
+[32m+[m[32m        'products' => $products,[m
+[32m+[m[32m        'categories' => $categories,[m
+[32m+[m[32m    ]);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[41m  [m
+[32m+[m
+[32m+[m[32m  public function store(Request $request)[m
+[32m+[m[32m{[m
+[32m+[m[32m  $validated = $request->validate([[m
+[32m+[m[32m    'full_name' => 'required|string|max:255',[m
+[32m+[m[32m    'email' => 'nullable|email',[m
+[32m+[m[32m    'phone' => 'nullable|string|max:20',[m
+[32m+[m[32m    'payment_method' => 'required|in:cash,cbe,other_bank,telebirr',[m
+[32m+[m
+[32m+[m[32m    'items' => 'required|array|min:1',[m
+[32m+[m[32m    'items.*.product_id' => 'required|exists:products,id',[m
+[32m+[m[32m    'items.*.quantity' => 'required|integer|min:1',[m
+[32m+[m[32m    'items.*.unit_price' => 'required|numeric|min:0',[m
+[32m+[m[32m]);[m
+[32m+[m
+[32m+[m[32m    return DB::transaction(function () use ($validated) {[m
+[32m+[m
+[32m+[m[32m        $sale = Sale::create([[m
+[32m+[m[32m            'user_id' => auth()->id(),[m
+[32m+[m[32m            'full_name' => $validated['full_name'],[m
+[32m+[m[32m            'email' => $validated['email'],[m
+[32m+[m[32m            'phone' => $validated['phone'],[m
+[32m+[m[32m            'payment_method' => $validated['payment_method'],[m
+[32m+[m[32m            'total_amount' => 0,[m
+[32m+[m[32m            'status' => 'completed',[m
+         ]);[m
+ [m
+[31m-        try {[m
+[31m-            // FIX: We must use $validated inside the transaction[m
+[31m-            return DB::transaction(function () use ($validated) {[m
+[31m-                // 1. Create the Sale[m
+[31m-                $sale = Sale::create([[m
+[31m-                    'user_id' => auth()->id(),[m
+[31m-                    'customer_name' => $validated['customer_name'],[m
+[31m-                    'customer_phone' => $validated['customer_phone'], // Corrected: using $validated[m
+[31m-                    'payment_method' => $validated['payment_method'],[m
+[31m-                    'status' => 'completed',[m
+[31m-                    'total_amount' => 0, [m
+[31m-                ]);[m
+[31m-[m
+[31m-                $total = 0;[m
+[31m-[m
+[31m-                // 2. Process Items[m
+[31m-                foreach ($validated['items'] as $item) {[m
+[31m-                    $product = Product::findOrFail($item['product_id']);[m
+[31m-                    [m
+[31m-                    if ($product->current_quantity < $item['quantity']) {[m
+[31m-                        throw new \Exception("Not enough stock for {$product->name}");[m
+[31m-                    }[m
+[31m-[m
+[31m-                    $subtotal = $item['quantity'] * $item['unit_price'];[m
+[31m-[m
+[31m-                    // Create SaleItem[m
+[31m-                    $sale->items()->create([[m
+[31m-                        'product_id' => $product->id,[m
+[31m-                        'quantity' => $item['quantity'],[m
+[31m-                        'unit_price' => $item['unit_price'],[m
+[31m-                        'subtotal' => $subtotal,[m
+[31m-                        // Using unit_buy_price for forecasting[m
+[31m-                        'profit' => $subtotal - ($product->unit_buy_price * $item['quantity']), [m
+[31m-                    ]);[m
+[31m-[m
+[31m-                    // 3. Update Inventory[m
+[31m-                    $product->decrement('current_quantity', $item['quantity']);[m
+[31m-                    $total += $subtotal;[m
+[31m-                }[m
+[32m+[m[32m        $total = 0;[m
+ [m
+[31m-                // 4. Finalize Sale[m
+[31m-                $sale->update(['total_amount' => $total]);[m
+[32m+[m[32m        foreach ($validated['items'] as $item) {[m
+ [m
+[31m-                return redirect()->route('sales.index')->with('success', 'Sale saved successfully!');[m
+[31m-            });[m
+[32m+[m[32m            $product = Product::findOrFail($item['product_id']);[m
+ [m
+[31m-        } catch (\Exception $e) {[m
+[31m-            return back()->withErrors(['general' => $e->getMessage()]);[m
+[32m+[m[32m            if ($product->current_quantity < $item['quantity']) {[m
+[32m+[m[32m                throw new \Exception("Not enough stock for {$product->name}");[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $subtotal = $item['quantity'] * $item['unit_price'];[m
+[32m+[m
+[32m+[m[32m            $sale->items()->create([[m
+[32m+[m[32m                'product_id' => $item['product_id'],[m
+[32m+[m[32m                'quantity' => $item['quantity'],[m
+[32m+[m[32m                'unit_price' => $item['unit_price'],[m
+[32m+[m[32m                'subtotal' => $subtotal,[m
+[32m+[m[32m                'profit' => $subtotal - ($product->unit_buy_price * $item['quantity']),[m
+[32m+[m
+[32m+[m[32m            ]);[m
+[32m+[m
+[32m+[m[32m            $product->decrement('current_quantity', $item['quantity']);[m
+[32m+[m
+[32m+[m[32m            $total += $subtotal;[m
+         }[m
+[31m-    }[m
+ [m
+[32m+[m[32m        $sale->update(['total_amount' => $total]);[m
+[32m+[m
+[32m+[m[32m        return redirect()->route('sales.inde

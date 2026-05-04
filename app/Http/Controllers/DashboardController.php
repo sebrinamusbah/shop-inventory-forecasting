@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Models\Sale;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -16,8 +18,11 @@ class DashboardController extends Controller
             ->with('category')
             ->get();
 
+        $todaySales = Sale::whereDate('sale_date', Carbon::today())
+            ->sum('total_amount');
+
         // =========================
-        // AI DATA (NEW ADDITION)
+        // AI DATA
         // =========================
 
         $latestSnapshot = DB::table('ai_snapshots')
@@ -63,7 +68,12 @@ class DashboardController extends Controller
             'lowStockProducts' => $lowStockProducts,
 
             // =========================
-            // NEW AI DATA (ADDED)
+            // SALES DATA
+            // =========================
+            'todaySales' => $todaySales,
+
+            // =========================
+            // AI DATA
             // =========================
             'aiSnapshot' => $latestSnapshot,
             'aiPredictions' => $latestPredictions,

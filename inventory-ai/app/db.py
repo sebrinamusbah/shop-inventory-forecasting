@@ -3,6 +3,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import logging
 from typing import Optional, Dict, Any
+from datetime import datetime
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ class Database:
                 result = conn.execute(text(query), params or {})
                 rows = result.mappings().all()
 
-                logger.info(f"fetch_all executed → {len(rows)} rows")
+                logger.info(f"fetch_all → {len(rows)} rows")
                 return rows
 
         except Exception as e:
@@ -54,17 +55,17 @@ class Database:
             raise
 
     # =============================
-    # CORE WRITE OPERATIONS
+    # CORE WRITE OPERATION (ONLY ONE)
     # =============================
     def execute(self, query: str, params: dict = None):
         """
-        Used for INSERT / UPDATE / DELETE
+        INSERT / UPDATE / DELETE
         """
         try:
             with self.engine.begin() as conn:
                 result = conn.execute(text(query), params or {})
 
-                logger.info("execute query successful")
+                logger.info("execute successful")
                 return result
 
         except Exception as e:
@@ -75,18 +76,10 @@ class Database:
     # PRODUCT IDS
     # =============================
     def get_all_product_ids(self):
-        query = """
-        SELECT id 
-        FROM products 
-        WHERE is_active = 1
-        """
+        query = "SELECT id FROM products WHERE is_active = 1"
 
         rows = self.fetch_all(query)
-
-        product_ids = [row["id"] for row in rows] if rows else []
-
-        logger.info(f"Loaded product IDs: {len(product_ids)}")
-        return product_ids
+        return [row["id"] for row in rows] if rows else []
 
     # =============================
     # PRODUCT LOOKUP
@@ -94,24 +87,17 @@ class Database:
     def get_product_by_id(self, product_id: int) -> Optional[Dict[str, Any]]:
         query = """
         SELECT 
-            id,
-            name,
-            sku,
-            current_quantity,
-            unit_buy_price,
-            unit_sell_price,
-            min_stock_level,
-            is_active,
+            id, name, sku, current_quantity,
+            unit_buy_price, unit_sell_price,
+            min_stock_level, is_active,
             total_sold_quantity
         FROM products
         WHERE id = :product_id
-        LIMIT 1
         """
 
         row = self.fetch_one(query, {"product_id": product_id})
 
         if not row:
-            logger.warning(f"Product not found: {product_id}")
             return None
 
         return {
@@ -123,7 +109,7 @@ class Database:
             "unit_sell_price": float(row["unit_sell_price"] or 0),
             "min_stock_level": int(row["min_stock_level"] or 0),
 
-            # ✅ FIXED LINE
+            # FIXED
             "is_active": bool(row["is_active"] or 0),
 
             "total_sold_quantity": int(row["total_sold_quantity"] or 0)
@@ -132,17 +118,10 @@ class Database:
     # =============================
     # SALES HISTORY
     # =============================
-    def get_sales_history_cached(
-        self,
-        product_id: int,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None
-    ):
+    def get_sales_history_cached(self, product_id: int, start_date=None, end_date=None):
 
         query = """
-        SELECT 
-            DATE(s.sale_date) as ds,
-            SUM(si.quantity) as y
+        SELECT DATE(s.sale_date) as ds, SUM(si.quantity) as y
         FROM sales s
         JOIN sale_items si ON s.id = si.sale_id
         WHERE si.product_id = :product_id
@@ -158,27 +137,23 @@ class Database:
             query += " AND s.sale_date <= :end_date"
             params["end_date"] = end_date
 
-        query += """
-        GROUP BY DATE(s.sale_date)
-        ORDER BY ds ASC
-        """
+        query += " GROUP BY DATE(s.sale_date) ORDER BY ds ASC"
 
         rows = self.fetch_all(query, params)
 
-        # ✅ FIX: safe DataFrame creation
         df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["ds", "y"])
 
         if not df.empty:
             df["ds"] = pd.to_datetime(df["ds"])
             df["y"] = pd.to_numeric(df["y"], errors="coerce").fillna(0)
 
-        logger.info(f"Sales history loaded → {len(df)} rows")
         return df
 
     # =============================
     # PRODUCTS LIST
     # =============================
     def get_products(self):
+
         query = """
         SELECT id, name, current_quantity 
         FROM products
@@ -188,10 +163,83 @@ class Database:
 
         rows = self.fetch_all(query)
 
-        # ✅ FIX: safe DataFrame creation
         df = pd.DataFrame(rows) if rows else pd.DataFrame(
             columns=["id", "name", "current_quantity"]
         )
 
         logger.info(f"Products loaded → {len(df)} rows")
         return df
+
+    # =============================
+    # FULL PRODUCTS TABLE
+    # =============================
+    def get_all_products_full(self):
+
+        query = """
+        SELECT id, name, sku, current_quantity,
+               min_stock_level, total_sold_quantity, is_active
+        FROM products
+        ORDER BY id DESC
+        """
+
+        rows = self.fetch_all(query)
+
+        return pd.DataFrame(rows) if rows else pd.DataFrame(columns=[
+            "id", "name", "sku", "current_quantity",
+            "min_stock_level", "total_sold_quantity", "is_active"
+        ])
+
+    # =============================
+    # AI SNAPSHOT UPSERT
+    # =============================
+    def upsert_ai_snapshot(
+        self,
+        snapshot_date,
+        total_sales,
+        total_profit,
+        top_product_id,
+        low_stock_count,
+        sales_trend
+    ):
+
+        existing = self.fetch_one(
+            "SELECT id FROM ai_snapshots WHERE snapshot_date = :snapshot_date",
+            {"snapshot_date": snapshot_date}
+        )
+
+        now = datetime.utcnow()
+
+        if existing:
+            query = """
+            UPDATE ai_snapshots
+            SET total_sales = :total_sales,
+                total_profit = :total_profit,
+                top_product_id = :top_product_id,
+                low_stock_count = :low_stock_count,
+                sales_trend = :sales_trend,
+                updated_at = :updated_at
+            WHERE snapshot_date = :snapshot_date
+            """
+        else:
+            query = """
+            INSERT INTO ai_snapshots
+            (snapshot_date, total_sales, total_profit,
+             top_product_id, low_stock_count, sales_trend,
+             created_at, updated_at)
+            VALUES (:snapshot_date, :total_sales, :total_profit,
+                    :top_product_id, :low_stock_count, :sales_trend,
+                    :created_at, :updated_at)
+            """
+
+        params = {
+            "snapshot_date": snapshot_date,
+            "total_sales": total_sales,
+            "total_profit": total_profit,
+            "top_product_id": top_product_id,
+            "low_stock_count": low_stock_count,
+            "sales_trend": sales_trend,
+            "created_at": now,
+            "updated_at": now
+        }
+
+        self.execute(query, params)
