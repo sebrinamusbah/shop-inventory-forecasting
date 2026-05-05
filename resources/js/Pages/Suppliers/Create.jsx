@@ -7,6 +7,8 @@ export default function Create({ auth }) {
         name: '',
         email: '',
         phone: '',
+        tin_number: '',
+        account_number: '',
         address: '',
     });
 
@@ -69,6 +71,31 @@ export default function Create({ auth }) {
                                     placeholder="e.g. +251..."
                                 />
                                 {errors.phone && <div className="text-red-500 text-xs mt-1">{errors.phone}</div>}
+                            </div>
+                            {/* TIN Number Field */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-bold text-black mb-2">TIN Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    value={data.tin_number}
+                                    onChange={e => setData('tin_number', e.target.value)}
+                                    placeholder="e.g. 0101..."
+                                />
+                                {errors.tin_number && <div className="text-red-500 text-xs mt-1">{errors.tin_number}</div>}
+                            </div>
+
+                            {/* Account Number Field */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-bold text-black mb-2">Account Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    value={data.account_number}
+                                    onChange={e => setData('account_number', e.target.value)}
+                                    placeholder="e.g. 1000..."
+                                />
+                                {errors.account_number && <div className="text-red-500 text-xs mt-1">{errors.account_number}</div>}
                             </div>
 
                             {/* Address Field */}

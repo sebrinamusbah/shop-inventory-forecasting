@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
 {
@@ -35,6 +36,8 @@ class SupplierController extends Controller
         'name' => 'required|string|max:255',
         'email' => 'nullable|email',
         'phone' => 'nullable|string',
+        'tin_number' => 'nullable|string|unique:suppliers,tin_number',
+        'account_number' => 'nullable|string|unique:suppliers,account_number',
         'address' => 'nullable|string',
     ]);
 
@@ -67,6 +70,16 @@ public function update(Request $request, Supplier $supplier)
         'name' => 'required|string|max:255',
         'email' => 'nullable|email',
         'phone' => 'nullable|string',
+        'tin_number' => [
+            'nullable',
+            'string',
+            Rule::unique('suppliers', 'tin_number')->ignore($supplier->id),
+        ],
+        'account_number' => [
+            'nullable',
+            'string',
+            Rule::unique('suppliers', 'account_number')->ignore($supplier->id),
+        ],
         'address' => 'nullable|string',
     ]);
 
