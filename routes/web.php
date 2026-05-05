@@ -83,6 +83,7 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
     // 2. Creation & Storage (Moved outside specific permission for testing)
     Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
     Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::post('/purchases/{id}/update-payment', [PurchaseController::class, 'updatePaymentStatus'])->name('purchases.updatePayment');
     
     // 3. Dynamic Filter Route
     Route::get('/purchases/get-products/{categoryId}', [PurchaseController::class, 'getProductsByCategory'])
@@ -90,6 +91,8 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
 
     // 4. Other Actions (Show, Edit, Update, Destroy)
     Route::resource('purchases', PurchaseController::class)->except(['index', 'create', 'store']);
+
+    
 
 
     // Analytics & Profit Reports

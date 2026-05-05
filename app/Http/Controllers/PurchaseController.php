@@ -172,4 +172,23 @@ public function destroy(Purchase $purchase)
         return back()->withErrors(['error' => 'Failed to cancel purchase: ' . $e->getMessage()]);
     }
 }
+public function updatePaymentStatus(Request $request, $id)
+{
+    // 1. Validate that the payment method is one of your allowed options
+    $request->validate([
+        'payment_method' => 'required|string',
+    ]);
+
+    // 2. Find the specific purchase using the ID from the URL
+    $purchase = \App\Models\Purchase::findOrFail($id);
+
+    // 3. Update the 'payment_method' column with the value from your dropdown
+    $purchase->update([
+        'payment_method' => $request->payment_method
+    ]);
+
+    // 4. Return back to the page with a success message
+    return back()->with('message', 'Payment method updated to ' . $request->payment_method);
+}
+
 }
