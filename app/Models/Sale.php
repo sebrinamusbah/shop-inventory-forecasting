@@ -14,6 +14,7 @@ class Sale extends Model
         'customer_name',
         'customer_phone', 
         'total_amount', 
+        'total_profit',
         'payment_method', 
         'sale_date',
         'status'

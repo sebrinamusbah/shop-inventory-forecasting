@@ -11,6 +11,7 @@ class StockAdjustment extends Model
     'category_id',
     'type',
     'quantity',
+    'total_cost',
     'previous_stock',
     'new_stock',
     'note',

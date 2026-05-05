@@ -40,32 +40,35 @@ public function create()
 
   
 
-  public function store(Request $request)
+ public function store(Request $request)
 {
-$validated = $request->validate([
-    'customer_name' => 'required|string|max:255',
-    'customer_phone' => 'nullable|string|max:20',
-    'payment_method' => 'required|in:cash,cbe,other_bank,telebirr',
-    'total_amount' => 'required|numeric|min:0',
+    $validated = $request->validate([
+        'customer_name' => 'required|string|max:255',
+        'customer_phone' => 'nullable|string|max:20',
+        'payment_method' => 'required|in:cash,cbe,other_bank,telebirr',
+        'total_amount' => 'required|numeric|min:0',
 
-    'items' => 'required|array|min:1',
-    'items.*.product_id' => 'required|exists:products,id',
-    'items.*.quantity' => 'required|integer|min:1',
-    'items.*.unit_price' => 'required|numeric|min:0',
-]);
+        'items' => 'required|array|min:1',
+        'items.*.product_id' => 'required|exists:products,id',
+        'items.*.quantity' => 'required|integer|min:1',
+        'items.*.unit_price' => 'required|numeric|min:0',
+    ]);
 
     return DB::transaction(function () use ($validated) {
 
-       $sale = Sale::create([
-    'user_id' => auth()->id(),
-    'customer_name' => $validated['customer_name'],
-    'customer_phone' => $validated['customer_phone'],
-    'payment_method' => $validated['payment_method'],
-    'total_amount' => $validated['total_amount'],
-    'status' => 'completed',
-]);
+        $sale = Sale::create([
+            'user_id' => auth()->id(),
+            'customer_name' => $validated['customer_name'],
+            'customer_phone' => $validated['customer_phone'],
+            'payment_method' => $validated['payment_method'],
+            'total_amount' => 0, // Placeholder, will update after loop
+            'total_profit' => 0, // Placeholder, will update after loop
+            'status' => 'completed',
+            'sale_date' => now(), // Ensuring the date is set for reporting
+        ]);
 
-        $total = 0;
+        $totalAmount = 0;
+        $totalProfit = 0; // Running total for profit
 
         foreach ($validated['items'] as $item) {
 
@@ -76,22 +79,30 @@ $validated = $request->validate([
             }
 
             $subtotal = $item['quantity'] * $item['unit_price'];
+            
+            // Calculate profit for this specific item line
+            $itemProfit = $subtotal - ($product->unit_buy_price * $item['quantity']);
 
-   $sale->items()->create([
-    'product_id' => $item['product_id'],
-    'quantity' => $item['quantity'],
-    'unit_cost' => $product->unit_buy_price,
-    'unit_price' => $item['unit_price'],
-    'subtotal' => $subtotal,
-    'profit' => $subtotal - ($product->unit_buy_price * $item['quantity']),
-]);
+            $sale->items()->create([
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+                'unit_cost' => $product->unit_buy_price,
+                'unit_price' => $item['unit_price'],
+                'subtotal' => $subtotal,
+                'profit' => $itemProfit,
+            ]);
 
             $product->decrement('current_quantity', $item['quantity']);
 
-            $total += $subtotal;
+            $totalAmount += $subtotal;
+            $totalProfit += $itemProfit; // Accumulate profit
         }
 
-        $sale->update(['total_amount' => $total]);
+        // Final update to the main sale record
+        $sale->update([
+            'total_amount' => $totalAmount,
+            'total_profit' => $totalProfit
+        ]);
 
         return redirect()->route('sales.index');
     });

@@ -253,7 +253,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     />
                 </svg>
             ),
-            href: "/profit-reports",
+            href: route('profit.index'),
             permission: "view profit reports",
         },
         {
