@@ -20,7 +20,6 @@ class Database:
             max_overflow=20,
             future=True
         )
-
         logger.info("✅ Database connection initialized")
 
     # =========================================================
@@ -43,8 +42,8 @@ class Database:
             with self.engine.connect() as conn:
                 result = conn.execute(text(query), params or {})
                 return result.mappings().all()
-        except Exception as e:
-            logger.exception(f"❌ fetch_all failed: {e}")
+        except Exception:
+            logger.exception("❌ fetch_all failed")
             return []
 
     def fetch_one(self, query: str, params: dict = None):
@@ -52,8 +51,8 @@ class Database:
             with self.engine.connect() as conn:
                 result = conn.execute(text(query), params or {})
                 return result.mappings().first()
-        except Exception as e:
-            logger.exception(f"❌ fetch_one failed: {e}")
+        except Exception:
+            logger.exception("❌ fetch_one failed")
             return None
 
     # =========================================================
@@ -63,8 +62,8 @@ class Database:
         try:
             with self.engine.begin() as conn:
                 conn.execute(text(query), params or {})
-        except Exception as e:
-            logger.exception(f"❌ execute failed: {e}")
+        except Exception:
+            logger.exception("❌ execute failed")
             raise
 
     # =========================================================
@@ -73,31 +72,32 @@ class Database:
     def get_product_by_id(self, product_id: int):
         query = """
         SELECT 
-            id, name, sku, category_id,
+            id,
+            name,
+            sku,
+            category_id,
             current_quantity,
-            unit_buy_price, unit_sell_price,
-            min_stock_level, is_active,
+            unit_buy_price,
+            unit_sell_price,
+            min_stock_level,
+            is_active,
             total_sold_quantity
         FROM products
         WHERE id = :product_id
         """
 
         row = self.fetch_one(query, {"product_id": product_id})
-
         return dict(row) if row else None
 
     # =========================================================
-    # ALL PRODUCT IDS (FIXED)
+    # ALL PRODUCT IDS
     # =========================================================
     def get_all_product_ids(self):
-        query = "SELECT id FROM products WHERE is_active = 1"
-        rows = self.fetch_all(query)
-
+        rows = self.fetch_all("SELECT id FROM products WHERE is_active = 1")
         return [r["id"] for r in rows] if rows else []
 
     # =========================================================
-    # SALES HISTORY (FOR AI)
-    # RETURNS: DataFrame with ds, y
+    # SALES HISTORY
     # =========================================================
     def get_sales_history_cached(self, product_id: int, start_date=None, end_date=None):
 
@@ -129,7 +129,6 @@ class Database:
 
         df = pd.DataFrame(rows)
 
-        # ✅ CLEAN FOR PROPHET
         df["ds"] = pd.to_datetime(df["created_at"], errors="coerce")
         df["y"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0)
 
@@ -151,7 +150,7 @@ class Database:
         return pd.DataFrame(rows)
 
     # =========================================================
-    # SALES KPIs (USED IN SNAPSHOT)
+    # KPI: SALES
     # =========================================================
     def get_product_sales(self, product_id: int):
         row = self.fetch_one("""
@@ -162,6 +161,9 @@ class Database:
 
         return float(row["total_sales"]) if row and row["total_sales"] else 0.0
 
+    # =========================================================
+    # KPI: PROFIT
+    # =========================================================
     def get_product_profit(self, product_id: int):
         row = self.fetch_one("""
             SELECT SUM(si.profit) as total_profit
@@ -172,7 +174,7 @@ class Database:
         return float(row["total_profit"]) if row and row["total_profit"] else 0.0
 
     # =========================================================
-    # SNAPSHOT UPSERT
+    # SNAPSHOT UPSERT (FIXED + SAFE)
     # =========================================================
     def upsert_ai_snapshot(
         self,
@@ -189,7 +191,7 @@ class Database:
             {"snapshot_date": snapshot_date}
         )
 
-        now = datetime.now()
+        now = datetime.utcnow()
 
         params = {
             "snapshot_date": snapshot_date,

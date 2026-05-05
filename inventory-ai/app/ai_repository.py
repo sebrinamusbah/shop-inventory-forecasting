@@ -11,22 +11,25 @@ class AIRepository:
         self.db = db
 
     # =========================================================
-    # 1. PREDICTION
+    # 1. PREDICTION (FIXED)
     # =========================================================
     def save_prediction(self, prediction: dict):
+
+        if not prediction:
+            return
 
         try:
             query = """
             INSERT INTO ai_predictions
             (product_id, product_name, predicted_demand,
-             avg_daily_demand, current_stock,
+             avg_daily_demand, current_quantity,
              confidence_score, trend,
              recommended_action, risk_score,
              forecast_start, forecast_end,
              created_at)
             VALUES
             (:product_id, :product_name, :predicted_demand,
-             :avg_daily_demand, :current_stock,
+             :avg_daily_demand, :current_quantity,
              :confidence_score, :trend,
              :recommended_action, :risk_score,
              :forecast_start, :forecast_end,
@@ -38,8 +41,8 @@ class AIRepository:
                 "product_name": prediction.get("product_name"),
 
                 "predicted_demand": self._float(prediction.get("predicted_demand")),
-                "avg_daily_demand": self._float(prediction.get("avg_daily_demand", 0)),
-                "current_stock": self._float(prediction.get("current_stock")),
+                "avg_daily_demand": self._float(prediction.get("avg_daily_demand")),
+                "current_quantity": self._float(prediction.get("current_quantity")),
 
                 "confidence_score": self._float(prediction.get("confidence_score")),
                 "trend": prediction.get("trend", "stable"),
@@ -57,11 +60,15 @@ class AIRepository:
 
         except Exception:
             logger.exception("❌ save_prediction failed")
+            raise
 
     # =========================================================
-    # 2. INSIGHT
+    # 2. INSIGHT (FIXED)
     # =========================================================
     def save_insight(self, insight: dict):
+
+        if not insight:
+            return
 
         try:
             query = """
@@ -89,9 +96,10 @@ class AIRepository:
 
         except Exception:
             logger.exception("❌ save_insight failed")
+            raise
 
     # =========================================================
-    # 3. ALERTS (FIXED + TRANSACTION)
+    # 3. ALERTS (FIXED + SAFE + NO DUPLICATES)
     # =========================================================
     def save_alerts(self, alerts: list):
 
@@ -110,10 +118,23 @@ class AIRepository:
              :created_at)
             """
 
-            # ✅ TRANSACTION WRAP
+            seen = set()
+
             with self.db.transaction() as conn:
 
                 for alert in alerts:
+
+                    key = (
+                        alert.get("product_id"),
+                        alert.get("alert_type"),
+                        alert.get("alert_message")
+                    )
+
+                    if key in seen:
+                        continue
+
+                    seen.add(key)
+
                     conn.execute(text(query), {
                         "product_id": alert.get("product_id"),
                         "product_name": alert.get("product_name"),
@@ -128,9 +149,10 @@ class AIRepository:
 
         except Exception:
             logger.exception("❌ save_alerts failed")
+            raise
 
     # =========================================================
-    # 4. SNAPSHOT
+    # 4. SNAPSHOT (FIXED)
     # =========================================================
     def save_snapshot(self, snapshot: dict):
 
@@ -141,7 +163,7 @@ class AIRepository:
             query = """
             INSERT INTO ai_snapshots
             (snapshot_date, total_sales, total_profit,
-             top_product_id, top_product_name,
+             top_product_id,
              low_stock_count, out_of_stock_count,
              sales_trend,
              total_predictions_count,
@@ -149,7 +171,7 @@ class AIRepository:
              created_at)
             VALUES
             (:snapshot_date, :total_sales, :total_profit,
-             :top_product_id, :top_product_name,
+             :top_product_id,
              :low_stock_count, :out_of_stock_count,
              :sales_trend,
              :total_predictions_count,
@@ -159,21 +181,14 @@ class AIRepository:
 
             self.db.execute(query, {
                 "snapshot_date": str(snapshot.get("snapshot_date", date.today())),
-
-                "total_sales": snapshot.get("total_sales", 0),
-                "total_profit": snapshot.get("total_profit", 0),
-
+                "total_sales": self._float(snapshot.get("total_sales")),
+                "total_profit": self._float(snapshot.get("total_profit")),
                 "top_product_id": snapshot.get("top_product_id"),
-                "top_product_name": snapshot.get("top_product_name"),
-
                 "low_stock_count": snapshot.get("low_stock_count", 0),
                 "out_of_stock_count": snapshot.get("out_of_stock_count", 0),
-
                 "sales_trend": snapshot.get("sales_trend", "stable"),
-
                 "total_predictions_count": snapshot.get("total_predictions_count", 0),
                 "critical_alerts_count": snapshot.get("critical_alerts_count", 0),
-
                 "created_at": datetime.utcnow()
             })
 
@@ -181,6 +196,7 @@ class AIRepository:
 
         except Exception:
             logger.exception("❌ save_snapshot failed")
+            raise
 
     # =========================================================
     # SAFE FLOAT

@@ -27,7 +27,7 @@ return new class extends Migration
             // FORECAST OUTPUT
             // ======================
             $table->integer('predicted_demand');
-            $table->integer('current_stock')->nullable();
+            $table->integer('current_quantity')->nullable();
 
             $table->decimal('confidence_score', 5, 2)->nullable();
 

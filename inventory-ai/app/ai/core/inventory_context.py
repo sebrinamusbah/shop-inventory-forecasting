@@ -18,7 +18,7 @@ class InventoryContext:
     # INPUT DATA
     # =============================
     sales_data: Optional[Any] = None
-    current_stock: float = 0.0
+    current_quantity: float = 0.0
     periods: int = 30
 
     # =============================

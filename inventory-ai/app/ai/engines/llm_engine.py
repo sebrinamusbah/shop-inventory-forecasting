@@ -2,17 +2,11 @@ from typing import Dict
 
 
 class ExplanationEngine:
-    """
-    SaaS-grade Explanation Layer (Time-aware + Business-ready)
-    """
 
     def __init__(self, use_llm: bool = False):
         self.use_llm = use_llm
 
-    # =============================
-    # MAIN API
-    # =============================
-    def explain(self, forecast: Dict, decision: Dict) -> str:
+    def explain(self, forecast: Dict, decision: Dict) -> Dict:
 
         forecast = forecast or {}
         decision = decision or {}
@@ -25,30 +19,33 @@ class ExplanationEngine:
         return self._rule_based_explain(ctx)
 
     # =============================
-    # CONTEXT BUILDER
+    # CONTEXT
     # =============================
     def _build_context(self, forecast: Dict, decision: Dict) -> Dict:
 
         product = forecast.get("product") or {}
         metrics = forecast.get("metrics") or {}
 
-        demand = float(metrics.get("predicted_demand") or 0)
-        stock = float(product.get("current_stock") or 0)
+        # 🔴 FIX 2: clear demand definition
+        total_demand = float(metrics.get("predicted_demand") or 0)
 
-        # safe daily demand
-        daily_demand = demand / 30 if demand > 0 else 0.1
+        # 🔴 FIX 1: single stock source (no duplicates)
+        stock = float(product.get("current_quantity") or 0)
 
-        # days until stock runs out
-        days_left = stock / daily_demand if daily_demand > 0 else 999
+        periods = forecast.get("model_meta", {}).get("periods", 30)
 
-        # monthly order suggestion
+        daily_demand = total_demand / max(periods, 1)
+        daily_demand = max(daily_demand, 0.0001)
+
+        days_left = stock / daily_demand if daily_demand > 0 else float("inf")
+
         monthly_order = max(0, int(daily_demand * 30 - stock))
 
         return {
             "product_id": product.get("id") or "UNKNOWN",
-            "product_name": product.get("name") or product.get("product_name") or "Product",
-            "demand": demand,
+            "product_name": product.get("name") or "Product",
             "stock": stock,
+            "total_demand": total_demand,
             "daily_demand": daily_demand,
             "days_left": days_left,
             "monthly_order": monthly_order,
@@ -57,71 +54,112 @@ class ExplanationEngine:
         }
 
     # =============================
-    # RULE-BASED EXPLANATION (NEW LOGIC)
+    # RULE ENGINE
     # =============================
-    def _rule_based_explain(self, ctx: Dict) -> str:
+    def _rule_based_explain(self, ctx: Dict) -> Dict:
 
         name = ctx["product_name"]
         stock = ctx["stock"]
+        demand = ctx["total_demand"]
         days_left = ctx["days_left"]
         monthly_order = ctx["monthly_order"]
         confidence = ctx["confidence"]
         action = ctx["action"]
 
-        # -----------------------------
-        # 1. EMERGENCY (VERY LOW STOCK TIME)
-        # -----------------------------
+        # =============================
+        # CRITICAL SHORTAGE
+        # =============================
         if days_left <= 2:
-            return (
-                f"{name} is understocked and will run out in {int(days_left)} days. "
-                f"Immediate purchase of {monthly_order} units is required for 1 month supply."
-            )
+            return {
+                "product_id": ctx["product_id"],
+                "product_name": name,
+                "message": f"{name} will run out in {int(days_left)} days. Immediate restocking required.",
+                "insight_type": "critical",
+                "severity": "high",
+                "reason_summary": "Severe stock shortage"
+            }
 
-        # -----------------------------
-        # 2. LOW STOCK WARNING
-        # -----------------------------
+        # =============================
+        # LOW STOCK
+        # =============================
         if days_left <= 7:
-            return (
-                f"{name} stock is low. Estimated to last {int(days_left)} days. "
-                f"Recommended order: {monthly_order} units for monthly coverage."
-            )
+            return {
+                "product_id": ctx["product_id"],
+                "product_name": name,
+                "message": f"{name} stock is low. Will last ~{int(days_left)} days.",
+                "insight_type": "warning",
+                "severity": "medium",
+                "reason_summary": "Demand exceeding supply"
+            }
 
-        # -----------------------------
-        # 3. RESTOCK SIGNAL
-        # -----------------------------
-        if action == "RESTOCK":
-            return (
-                f"{name} demand is increasing. "
-                f"Suggested order: {monthly_order} units for next month."
-            )
+        # =============================
+        # RESTOCK ACTION
+        # =============================
+        if action in ["RESTOCK", "EMERGENCY_RESTOCK"]:
+            return {
+                "product_id": ctx["product_id"],
+                "product_name": name,
+                "message": f"Suggested order: {monthly_order} units for {name}.",
+                "insight_type": "info",
+                "severity": "medium",
+                "reason_summary": "Demand increase detected"
+            }
 
-        # -----------------------------
-        # 4. OVERSTOCK
-        # -----------------------------
-        if stock > ctx["demand"]:
-            return (
-                f"{name} is overstocked. Consider reducing purchases or running promotions."
-            )
+        # =============================
+        # 🔴 FIX 4: IMPROVED OVERSTOCK LOGIC
+        # =============================
+        safety_buffer = demand * 0.2
 
-        # -----------------------------
-        # 5. LOW CONFIDENCE
-        # -----------------------------
-        if confidence < 0.5:
-            return (
-                f"Forecast for {name} is uncertain (confidence {confidence:.2f}). "
-                f"Use caution before ordering {monthly_order} units."
-            )
+        if confidence > 0.5 and stock > (demand + safety_buffer):
+            return {
+                "product_id": ctx["product_id"],
+                "product_name": name,
+                "message": (
+                    f"{name} is overstocked. "
+                    f"Consider discounts or promotions to reduce inventory."
+                ),
+                "insight_type": "warning",
+                "severity": "low",
+                "reason_summary": "Excess inventory vs demand"
+            }
 
-        # -----------------------------
-        # DEFAULT
-        # -----------------------------
-        return f"{name} is stable. No immediate action required."
+        # =============================
+        # 🔴 FIX 3 + 5: BETTER LOW CONFIDENCE MESSAGE
+        # =============================
+        if confidence is not None and confidence < 0.2:
+            return {
+                "product_id": ctx["product_id"],
+                "product_name": name,
+                "message": (
+                    f"Forecast for {name} is uncertain. "
+                    f"Treat this prediction with caution."
+                ),
+                "insight_type": "uncertain",
+                "severity": "low",
+                "reason_summary": "Model uncertainty"
+            }
+
+        # =============================
+        # STABLE CASE
+        # =============================
+        return {
+            "product_id": ctx["product_id"],
+            "product_name": name,
+            "message": f"{name} is stable. No action required.",
+            "insight_type": "stable",
+            "severity": "low",
+            "reason_summary": "Balanced supply and demand"
+        }
 
     # =============================
-    # LLM MODE (OPTIONAL)
+    # LLM MODE
     # =============================
-    def _llm_explain(self, ctx: Dict) -> str:
-        return (
-            f"[LLM MODE]\n"
-            f"{ctx}"
-        )
+    def _llm_explain(self, ctx: Dict) -> Dict:
+        return {
+            "product_id": ctx["product_id"],
+            "product_name": ctx["product_name"],
+            "message": f"[LLM] Insight for {ctx['product_name']}",
+            "insight_type": "llm",
+            "severity": "medium",
+            "reason_summary": "LLM explanation"
+        }

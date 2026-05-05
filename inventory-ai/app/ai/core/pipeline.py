@@ -1,5 +1,5 @@
 from app.ai.core.inventory_context import InventoryContext
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import logging
 import pandas as pd
 
@@ -27,9 +27,9 @@ class InventoryPipeline:
             self._persist_step
         ]
 
-    # =============================
+    # =========================================================
     # RUN PIPELINE
-    # =============================
+    # =========================================================
     def run(self, product_id: int, periods: int = 30):
 
         product = self.db.get_product_by_id(product_id)
@@ -38,21 +38,14 @@ class InventoryPipeline:
 
         raw_sales = self.db.get_sales_history_cached(product_id)
 
-        # ✅ FIX 1: safe empty check for DataFrame OR list
-        if raw_sales is None:
-            logger.warning(f"No sales data for product {product_id}")
+        if raw_sales is None or (
+            isinstance(raw_sales, list) and len(raw_sales) < 3
+        ) or (
+            isinstance(raw_sales, pd.DataFrame) and raw_sales.empty
+        ):
+            logger.warning(f"Not enough sales data for product {product_id}")
             return None
 
-        if isinstance(raw_sales, pd.DataFrame):
-            if raw_sales.empty or len(raw_sales) < 3:
-                logger.warning(f"Not enough sales data for product {product_id}")
-                return None
-        else:
-            if len(raw_sales) < 3:
-                logger.warning(f"Not enough sales data for product {product_id}")
-                return None
-
-        # ✅ FIX 2: ALWAYS convert safely to DataFrame and normalize data format
         raw_df = raw_sales if isinstance(raw_sales, pd.DataFrame) else pd.DataFrame(raw_sales)
         sales_data = self._prepare_sales_data(raw_df)
 
@@ -64,15 +57,15 @@ class InventoryPipeline:
         )
 
         context.sales_data = sales_data
-        context.current_stock = product.get("current_quantity", 0)
+        context.current_quantity = product.get("current_quantity", 0)
         context.periods = periods
 
         for step in self.steps:
             self._execute_step(step, context)
 
-        return context
+        return getattr(context, "final_output", None)
 
-    # =============================
+    # =========================================================
     def _execute_step(self, step, context):
         try:
             step(context)
@@ -80,61 +73,55 @@ class InventoryPipeline:
             context.add_error(step.__name__, str(e))
             logger.exception(f"Step failed: {step.__name__}")
 
-    # =============================
+    # =========================================================
     # FORECAST
-    # =============================
+    # =========================================================
     def _forecast_step(self, context):
 
-        forecast = self.prophet.predict(
+        context.forecast = self.prophet.predict(
             product={
                 "id": context.product_id,
                 "name": context.name,
-                "current_stock": context.current_stock
+                "current_quantity": context.current_quantity
             },
             sales_data=context.sales_data,
             periods=context.periods
-        )
+        ) or {}
 
-        context.forecast = forecast or {}
-
-    # =============================
+    # =========================================================
     # DECISION
-    # =============================
+    # =========================================================
     def _decision_step(self, context):
+
         context.decision = self.decision.evaluate(context.forecast) or {}
 
-    # =============================
+    # =========================================================
     # RISK
-    # =============================
+    # =========================================================
     def _risk_step(self, context):
+
         context.risk = self.risk.evaluate(context.forecast) or {}
 
-    # =============================
+    # =========================================================
     # INSIGHT
-    # =============================
+    # =========================================================
     def _explanation_step(self, context):
 
-        message = self.explainer.explain(
+        context.insight_result = self.explainer.explain(
             context.forecast,
             context.decision
-        )
-
-        context.insight_result = {
+        ) or {
             "product_id": context.product_id,
             "product_name": context.name,
-            "message": message,
-            "insight_type": self._get_insight_type(context),
-            "severity": self._get_severity(context),
-            "reason_summary": (
-                context.decision.get("reason")
-                or context.risk.get("risk_level")
-                or "AI-generated insight"
-            )
+            "message": "No insight available",
+            "insight_type": "info",
+            "severity": "low",
+            "reason_summary": ""
         }
 
-    # =============================
-    # ALERTS
-    # =============================
+    # =========================================================
+    # ALERTS (FIXED - NO DUPLICATES)
+    # =========================================================
     def _alerts_step(self, context):
 
         alerts = self.alerts.generate_alerts(
@@ -143,57 +130,97 @@ class InventoryPipeline:
             context.risk
         ) or []
 
-        context.alerts_result = [
-            {
+        cleaned = []
+        seen = set()
+
+        for a in alerts:
+
+            key = (
+                context.product_id,
+                a.get("alert_type"),
+                a.get("alert_message")
+            )
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            cleaned.append({
                 "product_id": context.product_id,
                 "product_name": context.name,
-                "alert_type": a.get("type"),
-                "priority": a.get("priority"),
-                "alert_message": a.get("message")
-            }
-            for a in alerts
-        ]
+                "alert_type": a.get("alert_type", "UNKNOWN"),
+                "priority": a.get("priority", "LOW"),
+                "alert_message": a.get("alert_message", "")
+            })
 
-    # =============================
-    # FINAL OUTPUT
-    # =============================
+        context.alerts_result = cleaned
+
+    # =========================================================
+    # FINAL OUTPUT (CLEAN + STABLE)
+    # =========================================================
     def _build_outputs_step(self, context):
 
         metrics = context.forecast.get("metrics", {})
 
+        predicted = float(metrics.get("predicted_demand", 0))
+        avg_daily = float(metrics.get("avg_daily_demand") or predicted / max(context.periods, 1))
+
+        forecast_list = context.forecast.get("forecast") or []
+
+        forecast_end = (
+            str(forecast_list[-1].get("ds"))
+            if forecast_list else
+            str(date.today() + timedelta(days=context.periods))
+        )
+
         context.prediction_result = {
             "product_id": context.product_id,
             "product_name": context.name,
-
-            "predicted_demand": float(metrics.get("predicted_demand", 0)),
-            "avg_daily_demand": float(metrics.get("avg_daily_demand", 0)),
+            "predicted_demand": predicted,
+            "avg_daily_demand": avg_daily,
+            "current_quantity": float(context.current_quantity),
             "confidence_score": float(metrics.get("confidence_score", 0)),
             "trend": metrics.get("trend", "stable"),
-
-            "current_stock": context.current_stock,
             "recommended_action": context.decision.get("action"),
-            "risk_score": context.risk.get("risk_score", 0),
-
+            "risk_score": float((context.risk or {}).get("risk_score", 0)),
             "forecast_start": str(date.today()),
-            "forecast_end": str(date.today() + timedelta(days=context.periods))
+            "forecast_end": forecast_end
         }
 
-    # =============================
-    # SAVE
-    # =============================
+        context.final_output = {
+            "prediction_result": context.prediction_result,
+            "insight_result": context.insight_result,
+            "alerts_result": context.alerts_result,
+            "meta": {
+                "product_id": context.product_id,
+                "generated_at": str(datetime.utcnow()),
+                "periods": context.periods
+            }
+        }
+
+    # =========================================================
+    # PERSIST (SAFE)
+    # =========================================================
     def _persist_step(self, context):
 
         if not getattr(context, "prediction_result", None):
             logger.warning("Skipping DB save: invalid prediction")
             return
 
-        self.repo.save_prediction(context.prediction_result)
-        self.repo.save_insight(context.insight_result)
-        self.repo.save_alerts(context.alerts_result)
+        try:
+            self.repo.save_prediction(context.prediction_result)
+            self.repo.save_insight(context.insight_result)
 
-    # =============================
+            if context.alerts_result:
+                self.repo.save_alerts(context.alerts_result)
+
+        except Exception as e:
+            logger.exception(f"DB save failed: {e}")
+
+    # =========================================================
     # DATA CLEANING
-    # =============================
+    # =========================================================
     def _prepare_sales_data(self, raw_sales):
 
         df = pd.DataFrame(raw_sales)
@@ -201,55 +228,19 @@ class InventoryPipeline:
         if df.empty:
             return pd.DataFrame(columns=["ds", "y"])
 
-        # =========================
-        # ✅ HANDLE BOTH CASES
-        # =========================
-
-        # Case 1: Already formatted from DB (ds, y)
         if "ds" in df.columns and "y" in df.columns:
             df["ds"] = pd.to_datetime(df["ds"], errors="coerce")
             df["y"] = pd.to_numeric(df["y"], errors="coerce").fillna(0)
 
-        # Case 2: Raw format (created_at, quantity)
         elif "created_at" in df.columns:
             df["ds"] = pd.to_datetime(df["created_at"], errors="coerce")
-
-            if "quantity" in df.columns:
-                df["y"] = pd.to_numeric(df["quantity"], errors="coerce")
-            elif "total_amount" in df.columns:
-                df["y"] = pd.to_numeric(df["total_amount"], errors="coerce")
-            else:
-                df["y"] = 1
+            df["y"] = pd.to_numeric(df.get("quantity", 1), errors="coerce")
 
         else:
-            raise ValueError(f"Unsupported sales data format: {df.columns}")
+            raise ValueError(f"Unsupported sales format: {df.columns}")
 
-        # =========================
-        # CLEAN
-        # =========================
         df = df.dropna(subset=["ds"])
         df = df.groupby("ds", as_index=False)["y"].sum()
         df = df.sort_values("ds").reset_index(drop=True)
 
         return df
-
-    # =============================
-    # HELPERS
-    # =============================
-    def _get_insight_type(self, context):
-        action = context.decision.get("action")
-
-        if action == "EMERGENCY_RESTOCK":
-            return "warning"
-        elif action == "RESTOCK":
-            return "opportunity"
-        return "trend"
-
-    def _get_severity(self, context):
-        risk = context.risk.get("risk_score", 0)
-
-        if risk > 0.7:
-            return "high"
-        elif risk > 0.4:
-            return "medium"
-        return "low"

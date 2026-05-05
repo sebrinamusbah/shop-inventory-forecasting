@@ -15,11 +15,11 @@ from app.ai_repository import AIRepository
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(title="Inventory AI System")
 
 
 # =============================
-# GLOBAL INIT (OK FOR SMALL SCALE)
+# INIT (GLOBAL - OK FOR SMALL/MEDIUM SCALE)
 # =============================
 DB_URL = os.getenv("DATABASE_URL")
 
@@ -27,6 +27,7 @@ if not DB_URL:
     raise ValueError("DATABASE_URL is missing")
 
 db = Database(DB_URL)
+repo = AIRepository(db)
 
 pipeline = InventoryPipeline(
     db=db,
@@ -34,14 +35,24 @@ pipeline = InventoryPipeline(
     decision=DecisionEngine(),
     risk=RiskEngine(),
     explainer=ExplanationEngine(use_llm=False),
-    alerts=AlertEngine()
+    alerts=AlertEngine(),
+    repo=repo   # ✅ FIXED (important)
 )
-
-repo = AIRepository(db)
 
 
 # =============================
-# API ENDPOINT
+# HEALTH CHECK (optional but useful)
+# =============================
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "message": "AI system is running"
+    }
+
+
+# =============================
+# MAIN AI ENDPOINT
 # =============================
 @app.post("/run-ai/{product_id}")
 def run_ai(product_id: int):
@@ -52,39 +63,49 @@ def run_ai(product_id: int):
         # =====================
         context = pipeline.run(product_id)
 
-        # =====================
-        # SAFETY CHECKS (IMPORTANT FIX)
-        # =====================
+        if not context:
+            raise ValueError("Pipeline returned no context")
+
         prediction = getattr(context, "prediction_result", None)
         insight = getattr(context, "insight_result", None)
         alerts = getattr(context, "alerts_result", [])
+        decision = getattr(context, "decision", {})
+        risk = getattr(context, "risk", {})
+        forecast = getattr(context, "forecast", {})
 
+        # =====================
+        # VALIDATION
+        # =====================
         if not prediction:
-            raise ValueError("Missing prediction_result from pipeline")
+            raise ValueError("Missing prediction_result")
 
         if not insight:
-            raise ValueError("Missing insight_result from pipeline")
+            raise ValueError("Missing insight_result")
 
         # =====================
-        # SAVE RESULTS
-        # =====================
-        repo.save_prediction(prediction)
-        repo.save_insight(insight)
-
-        if alerts:
-            repo.save_alerts(alerts)
-
-        # =====================
-        # RESPONSE (SAFE ACCESS)
+        # RESPONSE (FULL STRUCTURE)
         # =====================
         return {
             "status": "success",
+
             "product_id": product_id,
-            "action": (context.decision.get("action") if isinstance(context.decision, dict) else None),
-            "risk_score": (context.risk.get("risk_score", 0) if isinstance(context.risk, dict) else 0),
-            "confidence": (context.forecast or {})
-                .get("metrics", {})
-                .get("confidence_score"),
+
+            # MAIN AI OUTPUTS
+            "prediction": prediction,
+            "insight": insight,
+            "alerts": alerts,
+
+            # EXTRA ENGINE OUTPUTS
+            "decision": decision,
+            "risk": risk,
+
+            # META INFO
+            "meta": {
+                "confidence": (
+                    forecast.get("metrics", {}).get("confidence_score")
+                    if forecast else None
+                )
+            }
         }
 
     except Exception as e:

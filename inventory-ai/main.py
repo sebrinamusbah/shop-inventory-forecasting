@@ -36,16 +36,18 @@ logging.basicConfig(
 logger = logging.getLogger("MAIN")
 
 
-# =========================
-# MAIN FUNCTION
-# =========================
 def main():
 
+    # =========================
+    # VALIDATION
+    # =========================
     if not DB_URL:
-        raise ValueError("❌ DATABASE_URL is missing in .env")
+        raise ValueError("DATABASE_URL is missing")
+
+    logger.info("🚀 SYSTEM BOOTING...")
 
     # =========================
-    # INIT CORE SERVICES
+    # INIT CORE
     # =========================
     db = Database(DB_URL)
     repo = AIRepository(db)
@@ -60,42 +62,41 @@ def main():
         repo=repo
     )
 
-    scheduler = InventoryScheduler(pipeline, db)
+    scheduler = InventoryScheduler(pipeline, db, repo)
+
+    # =========================
+    # START SCHEDULER
+    # =========================
+    scheduler.start()
 
     # =========================
     # REGISTER JOBS
     # =========================
     if MODE == "demo":
-        scheduler.start_interval(minutes=20)
+        logger.info("🧪 DEMO MODE ACTIVE (1-minute interval)")
+        scheduler.start_interval(minutes=1)
 
     elif MODE == "production":
+        logger.info("🏭 PRODUCTION MODE ACTIVE (daily snapshot)")
         scheduler.start_daily(run_hour=2)
 
     else:
-        raise ValueError(f"❌ Invalid APP_MODE: {MODE}")
-
-    # =========================
-    # START SCHEDULER (ONCE)
-    # =========================
-    scheduler.start()
+        logger.warning("Invalid APP_MODE → defaulting to demo")
+        scheduler.start_interval(minutes=1)
 
     logger.info(f"🚀 SYSTEM RUNNING IN {MODE.upper()} MODE")
 
     # =========================
-    # KEEP APP ALIVE
+    # KEEP ALIVE LOOP
     # =========================
     try:
         while True:
             time.sleep(5)
 
     except KeyboardInterrupt:
-        logger.info("🛑 Shutting down...")
+        logger.info("🛑 Shutting down system...")
         scheduler.stop()
 
 
-# =========================
-# ENTRY POINT
-# =========================
 if __name__ == "__main__":
-    
     main()
