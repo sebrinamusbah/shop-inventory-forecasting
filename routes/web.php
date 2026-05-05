@@ -10,6 +10,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockAdjustmentController;
 
 use Illuminate\Support\Facades\Auth;
@@ -97,7 +98,8 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
     });
 
     Route::middleware(['permission:view profit reports'])->group(function () {
-        Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
+        Route::get('/profit', [ReportController::class, 'index'])->name('profit.index');
+       Route::get('/reports/profit-summary', [ReportController::class, 'getProfitSummary']);
     });
     
 
