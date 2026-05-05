@@ -8,13 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ai_insights', function (Blueprint $table) {
+        Schema::create('ai_alerts', function (Blueprint $table) {
             $table->id();
 
             // ======================
             // RELATION
             // ======================
             $table->foreignId('product_id')
+            
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
@@ -25,37 +26,39 @@ return new class extends Migration
             $table->string('product_name');
 
             // ======================
-            // INSIGHT DATA
+            // ALERT DATA
             // ======================
 
-            // risk / opportunity / trend / warning
-            $table->string('insight_type');
+            // low_stock / overstock / demand_spike / restock_needed
+            $table->string('alert_type');
 
-            // low / medium / high
-            $table->string('severity')->default('low');
+            $table->text('alert_message');
 
-            // AI explanation
-            $table->text('message');
+            // low / medium / high / critical
+            $table->string('priority')->default('low');
 
-            // optional short logic summary
-            $table->text('reason_summary')->nullable();
+            // whether alert is handled or not
+            $table->boolean('is_resolved')->default(false);
 
             // ======================
             // TIMESTAMP
             // ======================
-            
+    
+
             $table->timestamps();
 
             // ======================
-            // INDEXES
+            // INDEXES (important for dashboard speed)
             // ======================
             $table->index(['product_id']);
-            $table->index(['insight_type']);
+            $table->index(['alert_type']);
+            $table->index(['priority']);
+            $table->index(['is_resolved']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('ai_insights');
+        Schema::dropIfExists('ai_alerts');
     }
 };

@@ -6,34 +6,61 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::create('ai_predictions', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('ai_predictions', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('product_id')
-              ->constrained()
-              ->cascadeOnDelete();
+            // ======================
+            // RELATION
+            // ======================
+            $table->foreignId('product_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->enum('forecast_type', ['7d', '30d', '90d']);
+            // ======================
+            // PRODUCT INFO (DENORMALIZED for speed)
+            // ======================
+            $table->string('product_name');
 
-        $table->integer('predicted_demand');
-        $table->decimal('confidence_score', 5, 2)->nullable();
+            // ======================
+            // FORECAST OUTPUT
+            // ======================
+            $table->integer('predicted_demand');
+            $table->integer('current_stock')->nullable();
 
-        $table->text('recommended_action')->nullable();
+            $table->decimal('confidence_score', 5, 2)->nullable();
 
-        $table->date('forecast_start');
-        $table->date('forecast_end');
+            // RESTOCK / HOLD / DROP
+            $table->string('recommended_action')->nullable();
 
-        $table->timestamps();
-    });
-}
+            $table->decimal('risk_score', 5, 2)->nullable();
 
-public function down(): void
-{
-    Schema::dropIfExists('ai_predictions');
-}
+            // up / down / stable
+            $table->string('trend')->nullable();
+
+            // ======================
+            // TIME RANGE
+            // ======================
+            $table->date('forecast_start');
+            $table->date('forecast_end');
+
+           // ======================
+            // TIMESTAMP
+            // ======================
+            
+            $table->timestamps();
+            // ======================
+            // INDEXES (important for dashboard speed)
+            // ======================
+            $table->index(['product_id']);
+            $table->index(['recommended_action']);
+            $table->index(['trend']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ai_predictions');
+    }
 };

@@ -11,6 +11,7 @@ const Dashboard = () => {
         totalProducts,
         lowStockCount,
         lowStockProducts,
+        todaySales,
     } = usePage().props;
 
     return (
@@ -24,8 +25,9 @@ const Dashboard = () => {
 
                 <div className="bg-white rounded-lg p-5">
                     <p className="text-sm text-gray-500">Today's Sales</p>
-                    <p className="text-2xl font-semibold">--</p>
-                </div>
+<p className="text-2xl font-semibold">
+    Br {Number(todaySales || 0).toFixed(2)}
+</p>                </div>
 
                 <div className="bg-white rounded-lg p-5">
                     <p className="text-sm text-gray-500">Low Stock Products</p>

@@ -40,6 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // 🚀 MANUAL AI RUN
+Route::post('/ai/run/{productId}', [DashboardController::class, 'runAiManually'])
+    ->name('ai.run');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

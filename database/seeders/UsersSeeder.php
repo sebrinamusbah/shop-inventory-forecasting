@@ -15,7 +15,7 @@ class UsersSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin',
-                'password' =>('Admin@123'),
+                'password' => Hash::make('Admin@123'),
                 'must_reset_password' => false,
             ]
         );
