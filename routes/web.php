@@ -10,6 +10,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockAdjustmentController;
 
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +83,7 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
     // 2. Creation & Storage (Moved outside specific permission for testing)
     Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
     Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::post('/purchases/{id}/update-payment', [PurchaseController::class, 'updatePaymentStatus'])->name('purchases.updatePayment');
     
     // 3. Dynamic Filter Route
     Route::get('/purchases/get-products/{categoryId}', [PurchaseController::class, 'getProductsByCategory'])
@@ -90,6 +92,8 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
     // 4. Other Actions (Show, Edit, Update, Destroy)
     Route::resource('purchases', PurchaseController::class)->except(['index', 'create', 'store']);
 
+    
+
 
     // Analytics & Profit Reports
     Route::middleware(['permission:view analytics'])->group(function () {
@@ -97,7 +101,8 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
     });
 
     Route::middleware(['permission:view profit reports'])->group(function () {
-        Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
+        Route::get('/profit', [ReportController::class, 'index'])->name('profit.index');
+       Route::get('/reports/profit-summary', [ReportController::class, 'getProfitSummary']);
     });
     
 

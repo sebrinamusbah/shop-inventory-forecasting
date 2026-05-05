@@ -16,6 +16,8 @@ return new class extends Migration
         $table->string('name'); // The Shop or Person name
         $table->string('email')->nullable();
         $table->string('phone')->nullable();
+        $table->string('tin_number')->unique()->nullable();
+        $table->string('account_number')->unique()->nullable();
         $table->text('address')->nullable();
         $table->boolean('is_active')->default(true);
         $table->timestamps();

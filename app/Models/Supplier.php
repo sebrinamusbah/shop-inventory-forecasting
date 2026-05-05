@@ -14,6 +14,8 @@ class Supplier extends Model
         'name',
         'email',
         'phone',
+        'tin_number',
+        'account_number',
         'address',
         'is_active',
     ];

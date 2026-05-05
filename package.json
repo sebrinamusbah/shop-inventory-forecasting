@@ -21,8 +21,11 @@
         "vite": "^7.3.2"
     },
     "dependencies": {
+        "@heroicons/react": "^2.2.0",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/react": "^2.3.18",
-        "axios": "^1.11.0"
+        "axios": "^1.11.0",
+        "react-is": "^19.2.5",
+        "recharts": "^3.8.1"
     }
 }

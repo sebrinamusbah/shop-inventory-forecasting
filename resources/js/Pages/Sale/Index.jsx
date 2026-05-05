@@ -45,10 +45,7 @@ export default function Index({ sales }) {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-4">
-                        <Link
-                            href={route("dashboard")}
-                            className="bg-black p-3 rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center shadow-sm border border-black"
-                        >
+                        <Link>
                             <svg
                                 className="w-5 h-5 text-white"
                                 fill="none"
