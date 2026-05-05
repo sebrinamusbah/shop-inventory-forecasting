@@ -137,7 +137,7 @@ export default function Index({ auth }) {
                                     </h3>
                                     {card.isNet && (
                                         <span className="text-[10px] font-bold text-green-500 bg-green-50 px-1.5 py-0.5 rounded">
-                                            {metrics.margin}%
+                                            {metrics.margin}%  Margin 
                                         </span>
                                     )}
                                 </div>
@@ -153,21 +153,25 @@ export default function Index({ auth }) {
                         <div className="p-6">
                             <div className="max-w-xl mx-auto space-y-3">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Sales Income</span>
-                                    <span className="font-bold text-gray-800">{formatCurrency(metrics.revenue)}</span>
+                                   <span className="text-slate-900 font-bold text-base">Sales Income</span>
+    <span className="text-gray-900 font-semibold">{formatCurrency(metrics.revenue)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Purchase Costs</span>
-                                    <span className="font-bold text-orange-500">({formatCurrency(metrics.cogs)})</span>
+                                    <span className="text-slate-900 font-bold text-base">Purchase Costs</span>
+    <span className="text-orange-600 font-semibold">({formatCurrency(metrics.cogs)})</span>
                                 </div>
                                 <div className="flex justify-between text-sm py-2 border-y border-dashed">
-                                    <span className="font-bold text-gray-700">Gross Profit</span>
-                                    <span className="font-bold text-indigo-600">{formatCurrency(metrics.grossProfit)}</span>
+                                    <span className="text-slate-900 font-bold text-base">Gross Profit</span>
+    <span className="text-indigo-600 font-semibold">{formatCurrency(metrics.grossProfit)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 italic">Adjustments</span>
-                                    <span className="font-bold text-red-400">({formatCurrency(metrics.grossProfit - metrics.netProfit)})</span>
-                                </div>
+                                <div className="flex justify-between items-center py-2">
+    <span className="text-slate-900 font-bold text-base">Adjustments</span>
+    <span className="text-red-500 font-semibold text-base">
+        {metrics.adjustments > 0 
+            ? `(ETB ${parseFloat(metrics.adjustments).toLocaleString()})` 
+            : 'ETB 0.00'}
+    </span>
+</div>
                                 <div className="flex justify-between pt-4 mt-2 border-t-2 border-gray-100">
                                     <span className="text-base font-black text-gray-900 uppercase">Net Earnings</span>
                                     <span className="text-xl font-black text-green-600">{formatCurrency(metrics.netProfit)}</span>

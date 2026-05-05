@@ -18,7 +18,7 @@ export default function Index({ auth, suppliers }) {
                     <div className="flex items-center gap-4">
                         
                         {/* BACK ARROW BUTTON - Consistent with Sales & Purchase */}
-                        <Link
+                      { /* <Link
                             href={route('dashboard')}
                             className="bg-black p-3 rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center shadow-sm border border-black"
                         >
@@ -35,7 +35,7 @@ export default function Index({ auth, suppliers }) {
                                     d="M15 19l-7-7 7-7" 
                                 />
                             </svg>
-                        </Link>
+                        </Link> */}
 
                         <div>
                             <h2 className="font-bold text-3xl text-gray-900 tracking-tight">Suppliers</h2>

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Sale;
-use App\Models\StockAdjustment; // Ensure you have this model
+use App\Models\StockAdjustment; 
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -50,19 +50,28 @@ class ReportController extends Controller
             }
         }
 
-        // 1. Calculate Revenue and Gross Profit
-        $revenue = Sale::whereBetween('sale_date', [$start, $end])->sum('total_amount') ?? 0;
-        $grossProfit = Sale::whereBetween('sale_date', [$start, $end])->sum('total_profit') ?? 0;
+        /**
+         * 1. Calculate Revenue and Gross Profit
+         * FIX: We added ->where('status', 'completed') so that 
+         * 'returned' or 'cancelled' orders are excluded from the money totals.
+         */
+        $revenue = Sale::whereBetween('sale_date', [$start, $end])
+            ->where('status', 'completed')
+            ->sum('total_amount') ?? 0;
+
+        $grossProfit = Sale::whereBetween('sale_date', [$start, $end])
+            ->where('status', 'completed')
+            ->sum('total_profit') ?? 0;
         
         // 2. Calculate COGS (Revenue - Gross Profit)
         $cogs = $revenue - $grossProfit;
 
         // 3. Calculate Stock Adjustments (Damages/Losses)
-        // If you don't have a table for this yet, set to 0 for now
-        $adjustments = 0; 
+       $adjustments = \App\Models\StockAdjustment::whereBetween('created_at', [$start, $end])
+    ->sum('total_cost') ?? 0;
         
         // 4. Final Net Profit
-        $netProfit = $grossProfit - $adjustments;
+       $netProfit = $grossProfit - $adjustments;
 
         // 5. Margin Percentage
         $margin = $revenue > 0 ? ($netProfit / $revenue) * 100 : 0;
@@ -72,6 +81,7 @@ class ReportController extends Controller
                 'revenue' => (float)$revenue,
                 'cogs' => (float)$cogs,
                 'grossProfit' => (float)$grossProfit,
+                'adjustments' => (float)$adjustments,
                 'netProfit' => (float)$netProfit,
                 'margin' => round($margin, 2)
             ],
