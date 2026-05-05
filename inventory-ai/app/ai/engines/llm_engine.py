@@ -3,134 +3,125 @@ from typing import Dict
 
 class ExplanationEngine:
     """
-    Phase 3: SaaS-grade Explanation Layer
-
-    Converts:
-        Forecast + Decision → Human business explanation
-
-    Design:
-        - deterministic fallback (safe)
-        - LLM-ready architecture (future upgrade)
-        - structured reasoning model
+    SaaS-grade Explanation Layer (Time-aware + Business-ready)
     """
 
     def __init__(self, use_llm: bool = False):
         self.use_llm = use_llm
 
-    # -----------------------------
+    # =============================
     # MAIN API
-    # -----------------------------
+    # =============================
     def explain(self, forecast: Dict, decision: Dict) -> str:
-        """
-        Generate human-readable business explanation
-        """
 
-        context = self._build_context(forecast, decision)
+        forecast = forecast or {}
+        decision = decision or {}
 
-        # =============================
-        # LLM MODE (future upgrade)
-        # =============================
+        ctx = self._build_context(forecast, decision)
+
         if self.use_llm:
-            return self._llm_explain(context)
+            return self._llm_explain(ctx)
 
-        # =============================
-        # RULE-BASED FALLBACK (NOW)
-        # =============================
-        return self._rule_based_explain(context)
+        return self._rule_based_explain(ctx)
 
-    # -----------------------------
-    # CONTEXT BUILDER (IMPORTANT)
-    # -----------------------------
+    # =============================
+    # CONTEXT BUILDER
+    # =============================
     def _build_context(self, forecast: Dict, decision: Dict) -> Dict:
+
         product = forecast.get("product") or {}
+        metrics = forecast.get("metrics") or {}
+
+        demand = float(metrics.get("predicted_demand") or 0)
+        stock = float(product.get("current_stock") or 0)
+
+        # safe daily demand
+        daily_demand = demand / 30 if demand > 0 else 0.1
+
+        # days until stock runs out
+        days_left = stock / daily_demand if daily_demand > 0 else 999
+
+        # monthly order suggestion
+        monthly_order = max(0, int(daily_demand * 30 - stock))
+
         return {
-            "product_id": forecast.get("product_id") or product.get("id"),
-            "demand": forecast.get("predicted_demand", 0) or forecast.get("metrics", {}).get("predicted_demand", 0),
-            "stock": forecast.get("current_stock", 0) or product.get("current_stock", 0),
-            "confidence": float(forecast.get("confidence_score", 0) or forecast.get("metrics", {}).get("confidence_score", 0)),
-            "action": decision.get("action"),
-            "recommended_order": decision.get("recommended_order", 0),
-            "reason": decision.get("reason", "Model-based decision")
+            "product_id": product.get("id") or "UNKNOWN",
+            "product_name": product.get("name") or product.get("product_name") or "Product",
+            "demand": demand,
+            "stock": stock,
+            "daily_demand": daily_demand,
+            "days_left": days_left,
+            "monthly_order": monthly_order,
+            "confidence": float(metrics.get("confidence_score") or 0),
+            "action": decision.get("action", "NO_ACTION")
         }
 
-    # -----------------------------
-    # RULE-BASED ENGINE (NOW)
-    # -----------------------------
+    # =============================
+    # RULE-BASED EXPLANATION (NEW LOGIC)
+    # =============================
     def _rule_based_explain(self, ctx: Dict) -> str:
 
-        product_id = ctx["product_id"]
-        demand = ctx["demand"]
+        name = ctx["product_name"]
         stock = ctx["stock"]
+        days_left = ctx["days_left"]
+        monthly_order = ctx["monthly_order"]
         confidence = ctx["confidence"]
         action = ctx["action"]
 
-        # =============================
-        # LOW CONFIDENCE CASE
-        # =============================
-        if confidence < 0.5:
+        # -----------------------------
+        # 1. EMERGENCY (VERY LOW STOCK TIME)
+        # -----------------------------
+        if days_left <= 2:
             return (
-                f"Forecast for Product {product_id} has low confidence ({confidence:.2f}). "
-                f"Decision '{action}' is conservative due to insufficient data reliability. "
-                f"Business impact is minimized by avoiding aggressive inventory changes."
+                f"{name} is understocked and will run out in {int(days_left)} days. "
+                f"Immediate purchase of {monthly_order} units is required for 1 month supply."
             )
 
-        # =============================
-        # EMERGENCY RESTOCK
-        # =============================
-        if action == "EMERGENCY_RESTOCK":
+        # -----------------------------
+        # 2. LOW STOCK WARNING
+        # -----------------------------
+        if days_left <= 7:
             return (
-                f"CRITICAL ALERT: Product {product_id} demand ({demand}) far exceeds stock ({stock}). "
-                f"The system recommends immediate emergency restocking to prevent stockout risk. "
-                f"Confidence level: {confidence:.2f}. Business priority: HIGH."
+                f"{name} stock is low. Estimated to last {int(days_left)} days. "
+                f"Recommended order: {monthly_order} units for monthly coverage."
             )
 
-        # =============================
-        # RESTOCK
-        # =============================
+        # -----------------------------
+        # 3. RESTOCK SIGNAL
+        # -----------------------------
         if action == "RESTOCK":
             return (
-                f"Inventory recommendation for Product {product_id}: RESTOCK. "
-                f"Forecasted demand is {demand} units vs {stock} available units. "
-                f"Confidence is {confidence:.2f}, indicating stable predictive signal. "
-                f"This action reduces stockout risk while maintaining healthy inventory flow."
+                f"{name} demand is increasing. "
+                f"Suggested order: {monthly_order} units for next month."
             )
 
-        # =============================
-        # OVERSTOCK / REDUCE
-        # =============================
-        if action in ["OVERSTOCK", "REDUCE_STOCK"]:
+        # -----------------------------
+        # 4. OVERSTOCK
+        # -----------------------------
+        if stock > ctx["demand"]:
             return (
-                f"Product {product_id} shows overstock conditions. "
-                f"Current stock ({stock}) exceeds forecasted demand ({demand}). "
-                f"Recommendation: slow procurement or trigger promotional strategy. "
-                f"Confidence: {confidence:.2f}."
+                f"{name} is overstocked. Consider reducing purchases or running promotions."
             )
 
-        # =============================
-        # HOLD (DEFAULT)
-        # =============================
-        return (
-            f"Product {product_id} is stable. "
-            f"No immediate action required as stock ({stock}) aligns with demand forecast ({demand}). "
-            f"System recommends monitoring trend before next decision cycle."
-        )
+        # -----------------------------
+        # 5. LOW CONFIDENCE
+        # -----------------------------
+        if confidence < 0.5:
+            return (
+                f"Forecast for {name} is uncertain (confidence {confidence:.2f}). "
+                f"Use caution before ordering {monthly_order} units."
+            )
 
-    # -----------------------------
-    # LLM HOOK (PHASE 4 READY)
-    # -----------------------------
-    def _llm_explain(self, context: Dict) -> str:
-        """
-        Placeholder for Phase 4 (LLM like TinyLlama/OpenAI)
+        # -----------------------------
+        # DEFAULT
+        # -----------------------------
+        return f"{name} is stable. No immediate action required."
 
-        You will later plug:
-            - TinyLlama
-            - Mistral
-            - OpenAI GPT
-        """
+    # =============================
+    # LLM MODE (OPTIONAL)
+    # =============================
+    def _llm_explain(self, ctx: Dict) -> str:
         return (
-            f"[LLM MODE ENABLED]\n"
-            f"Product {context['product_id']} requires decision explanation.\n"
-            f"Context: {context}\n"
-            f"(Replace with real LLM call in Phase 4)"
+            f"[LLM MODE]\n"
+            f"{ctx}"
         )
-        

@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
 import os
 import time
+import logging
+from dotenv import load_dotenv
 
 from app.db import Database
 from app.prophet_engine import ProphetEngine
@@ -12,19 +13,42 @@ from app.ai.engines.llm_engine import ExplanationEngine
 
 from app.ai.core.pipeline import InventoryPipeline
 from app.ai.scheduler import InventoryScheduler
+from app.ai_repository import AIRepository
 
 
-# =============================
+# =========================
 # LOAD ENV
-# =============================
+# =========================
 load_dotenv()
+
 DB_URL = os.getenv("DATABASE_URL")
-MODE = os.getenv("APP_MODE", "demo")  # demo or production
+MODE = os.getenv("APP_MODE", "demo")
 
 
+# =========================
+# LOGGING
+# =========================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+
+logger = logging.getLogger("MAIN")
+
+
+# =========================
+# MAIN FUNCTION
+# =========================
 def main():
 
+    if not DB_URL:
+        raise ValueError("❌ DATABASE_URL is missing in .env")
+
+    # =========================
+    # INIT CORE SERVICES
+    # =========================
     db = Database(DB_URL)
+    repo = AIRepository(db)
 
     pipeline = InventoryPipeline(
         db=db,
@@ -32,30 +56,46 @@ def main():
         decision=DecisionEngine(),
         risk=RiskEngine(),
         explainer=ExplanationEngine(use_llm=False),
-        alerts=AlertEngine()
+        alerts=AlertEngine(),
+        repo=repo
     )
 
     scheduler = InventoryScheduler(pipeline, db)
 
-    # =============================
-    # MODE SWITCH
-    # =============================
+    # =========================
+    # REGISTER JOBS
+    # =========================
     if MODE == "demo":
-        scheduler.start_interval(minutes=5)
-        print("🚀 DEMO MODE → every 5 minutes")
+        scheduler.start_interval(minutes=20)
+
+    elif MODE == "production":
+        scheduler.start_daily(run_hour=2)
 
     else:
-        scheduler.start_daily(run_hour=2)
-        print("🏭 PRODUCTION MODE → daily at 02:00")
+        raise ValueError(f"❌ Invalid APP_MODE: {MODE}")
 
+    # =========================
+    # START SCHEDULER (ONCE)
+    # =========================
+    scheduler.start()
+
+    logger.info(f"🚀 SYSTEM RUNNING IN {MODE.upper()} MODE")
+
+    # =========================
+    # KEEP APP ALIVE
+    # =========================
     try:
         while True:
             time.sleep(5)
 
     except KeyboardInterrupt:
+        logger.info("🛑 Shutting down...")
         scheduler.stop()
-        print("🛑 Scheduler stopped")
 
 
+# =========================
+# ENTRY POINT
+# =========================
 if __name__ == "__main__":
+    
     main()

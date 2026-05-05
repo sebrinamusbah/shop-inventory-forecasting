@@ -2,8 +2,8 @@ from sqlalchemy import create_engine, text
 import pandas as pd
 from dotenv import load_dotenv
 import logging
-from typing import Optional, Dict, Any
 from datetime import datetime
+from contextlib import contextmanager
 
 load_dotenv()
 
@@ -11,79 +11,69 @@ logger = logging.getLogger(__name__)
 
 
 class Database:
-    """
-    Production-ready AI Engine DB layer
-    """
 
     def __init__(self, db_url: str):
         self.engine = create_engine(
             db_url,
             pool_pre_ping=True,
             pool_size=10,
-            max_overflow=20
+            max_overflow=20,
+            future=True
         )
 
         logger.info("✅ Database connection initialized")
 
-    # =============================
-    # CORE READ
-    # =============================
+    # =========================================================
+    # TRANSACTION
+    # =========================================================
+    @contextmanager
+    def transaction(self):
+        with self.engine.begin() as conn:
+            try:
+                yield conn
+            except Exception:
+                logger.exception("❌ Transaction failed")
+                raise
+
+    # =========================================================
+    # READ HELPERS
+    # =========================================================
     def fetch_all(self, query: str, params: dict = None):
         try:
             with self.engine.connect() as conn:
                 result = conn.execute(text(query), params or {})
-                rows = result.mappings().all()
-
-                logger.info(f"fetch_all → {len(rows)} rows")
-                return rows
-
+                return result.mappings().all()
         except Exception as e:
-            logger.exception(f"fetch_all failed: {e}")
-            raise
+            logger.exception(f"❌ fetch_all failed: {e}")
+            return []
 
     def fetch_one(self, query: str, params: dict = None):
         try:
             with self.engine.connect() as conn:
                 result = conn.execute(text(query), params or {})
-                row = result.mappings().first()
-
-                logger.info("fetch_one executed")
-                return row
-
+                return result.mappings().first()
         except Exception as e:
-            logger.exception(f"fetch_one failed: {e}")
-            raise
+            logger.exception(f"❌ fetch_one failed: {e}")
+            return None
 
-    # =============================
-    # CORE WRITE
-    # =============================
+    # =========================================================
+    # WRITE
+    # =========================================================
     def execute(self, query: str, params: dict = None):
         try:
             with self.engine.begin() as conn:
                 conn.execute(text(query), params or {})
-
-                logger.info("execute successful")
-
         except Exception as e:
-            logger.exception(f"execute failed: {e}")
+            logger.exception(f"❌ execute failed: {e}")
             raise
 
-    # =============================
-    # PRODUCT IDS
-    # =============================
-    def get_all_product_ids(self):
-        query = "SELECT id FROM products WHERE is_active = 1"
-
-        rows = self.fetch_all(query)
-        return [row["id"] for row in rows] if rows else []
-
-    # =============================
-    # PRODUCT BY ID
-    # =============================
-    def get_product_by_id(self, product_id: int) -> Optional[Dict[str, Any]]:
+    # =========================================================
+    # PRODUCT
+    # =========================================================
+    def get_product_by_id(self, product_id: int):
         query = """
         SELECT 
-            id, name, sku,category_id,
+            id, name, sku, category_id,
             current_quantity,
             unit_buy_price, unit_sell_price,
             min_stock_level, is_active,
@@ -94,29 +84,27 @@ class Database:
 
         row = self.fetch_one(query, {"product_id": product_id})
 
-        if not row:
-            return None
+        return dict(row) if row else None
 
-        return {
-            "id": row["id"],
-            "name": row["name"],
-            "sku": row["sku"],
-            "category_id": row["category_id"] or "unknown",
-            "current_quantity": int(row["current_quantity"] or 0),
-            "unit_buy_price": float(row["unit_buy_price"] or 0),
-            "unit_sell_price": float(row["unit_sell_price"] or 0),
-            "min_stock_level": int(row["min_stock_level"] or 0),
-            "is_active": bool(row["is_active"] or 0),
-            "total_sold_quantity": int(row["total_sold_quantity"] or 0)
-        }
+    # =========================================================
+    # ALL PRODUCT IDS (FIXED)
+    # =========================================================
+    def get_all_product_ids(self):
+        query = "SELECT id FROM products WHERE is_active = 1"
+        rows = self.fetch_all(query)
 
-    # =============================
-    # SALES HISTORY
-    # =============================
+        return [r["id"] for r in rows] if rows else []
+
+    # =========================================================
+    # SALES HISTORY (FOR AI)
+    # RETURNS: DataFrame with ds, y
+    # =========================================================
     def get_sales_history_cached(self, product_id: int, start_date=None, end_date=None):
 
         query = """
-        SELECT DATE(s.sale_date) as ds, SUM(si.quantity) as y
+        SELECT 
+            DATE(s.sale_date) as created_at,
+            SUM(si.quantity) as quantity
         FROM sales s
         JOIN sale_items si ON s.id = si.sale_id
         WHERE si.product_id = :product_id
@@ -132,62 +120,60 @@ class Database:
             query += " AND s.sale_date <= :end_date"
             params["end_date"] = end_date
 
-        query += " GROUP BY DATE(s.sale_date) ORDER BY ds ASC"
+        query += " GROUP BY DATE(s.sale_date) ORDER BY created_at ASC"
 
         rows = self.fetch_all(query, params)
 
-        df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["ds", "y"])
+        if not rows:
+            return pd.DataFrame(columns=["ds", "y"])
 
-        if not df.empty:
-            df["ds"] = pd.to_datetime(df["ds"])
-            df["y"] = pd.to_numeric(df["y"], errors="coerce").fillna(0)
+        df = pd.DataFrame(rows)
+
+        # ✅ CLEAN FOR PROPHET
+        df["ds"] = pd.to_datetime(df["created_at"], errors="coerce")
+        df["y"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0)
+
+        df = df.dropna(subset=["ds"])
+        df = df.groupby("ds", as_index=False)["y"].sum()
+        df = df.sort_values("ds").reset_index(drop=True)
 
         return df
 
-    # =============================
+    # =========================================================
     # PRODUCTS LIST
-    # =============================
+    # =========================================================
     def get_products(self):
+        rows = self.fetch_all("""
+            SELECT id, name, current_quantity
+            FROM products
+            WHERE is_active = 1
+        """)
+        return pd.DataFrame(rows)
 
-        query = """
-        SELECT id, name, current_quantity 
-        FROM products
-        WHERE is_active = 1
-        ORDER BY name ASC
-        """
+    # =========================================================
+    # SALES KPIs (USED IN SNAPSHOT)
+    # =========================================================
+    def get_product_sales(self, product_id: int):
+        row = self.fetch_one("""
+            SELECT SUM(si.subtotal) as total_sales
+            FROM sale_items si
+            WHERE si.product_id = :pid
+        """, {"pid": product_id})
 
-        rows = self.fetch_all(query)
+        return float(row["total_sales"]) if row and row["total_sales"] else 0.0
 
-        return pd.DataFrame(rows) if rows else pd.DataFrame(
-            columns=["id", "name", "current_quantity"]
-        )
+    def get_product_profit(self, product_id: int):
+        row = self.fetch_one("""
+            SELECT SUM(si.profit) as total_profit
+            FROM sale_items si
+            WHERE si.product_id = :pid
+        """, {"pid": product_id})
 
-    # =============================
-    # FULL PRODUCTS
-    # =============================
-    def get_all_products_full(self):
+        return float(row["total_profit"]) if row and row["total_profit"] else 0.0
 
-        query = """
-        SELECT id, name, sku, category,
-               current_quantity,
-               min_stock_level,
-               total_sold_quantity,
-               is_active
-        FROM products
-        ORDER BY id DESC
-        """
-
-        rows = self.fetch_all(query)
-
-        return pd.DataFrame(rows) if rows else pd.DataFrame(columns=[
-            "id", "name", "sku", "category",
-            "current_quantity", "min_stock_level",
-            "total_sold_quantity", "is_active"
-        ])
-
-    # =============================
-    # SNAPSHOT UPSERT (FIXED)
-    # =============================
+    # =========================================================
+    # SNAPSHOT UPSERT
+    # =========================================================
     def upsert_ai_snapshot(
         self,
         snapshot_date,
@@ -203,7 +189,18 @@ class Database:
             {"snapshot_date": snapshot_date}
         )
 
-        now = datetime.utcnow()
+        now = datetime.now()
+
+        params = {
+            "snapshot_date": snapshot_date,
+            "total_sales": total_sales,
+            "total_profit": total_profit,
+            "top_product_id": top_product_id,
+            "low_stock_count": low_stock_count,
+            "sales_trend": sales_trend,
+            "created_at": now,
+            "updated_at": now
+        }
 
         if existing:
             query = """
@@ -216,37 +213,16 @@ class Database:
                 updated_at = :updated_at
             WHERE snapshot_date = :snapshot_date
             """
-
-            params = {
-                "snapshot_date": snapshot_date,
-                "total_sales": total_sales,
-                "total_profit": total_profit,
-                "top_product_id": top_product_id,
-                "low_stock_count": low_stock_count,
-                "sales_trend": sales_trend,
-                "updated_at": now
-            }
-
         else:
             query = """
             INSERT INTO ai_snapshots
             (snapshot_date, total_sales, total_profit,
              top_product_id, low_stock_count, sales_trend,
              created_at, updated_at)
-            VALUES (:snapshot_date, :total_sales, :total_profit,
-                    :top_product_id, :low_stock_count, :sales_trend,
-                    :created_at, :updated_at)
+            VALUES
+            (:snapshot_date, :total_sales, :total_profit,
+             :top_product_id, :low_stock_count, :sales_trend,
+             :created_at, :updated_at)
             """
-
-            params = {
-                "snapshot_date": snapshot_date,
-                "total_sales": total_sales,
-                "total_profit": total_profit,
-                "top_product_id": top_product_id,
-                "low_stock_count": low_stock_count,
-                "sales_trend": sales_trend,
-                "created_at": now,
-                "updated_at": now
-            }
 
         self.execute(query, params)

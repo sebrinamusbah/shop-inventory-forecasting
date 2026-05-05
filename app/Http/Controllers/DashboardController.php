@@ -26,27 +26,28 @@ class DashboardController extends Controller
             ->sum('total_amount');
 
         // =========================
-        // AI SNAPSHOT (LATEST)
+        // AI SNAPSHOT (LATEST SAFE)
         // =========================
         $aiSnapshot = DB::table('ai_snapshots')
             ->orderByDesc('id')
             ->first();
 
-        // fallback safety
-        $aiSnapshot = $aiSnapshot ?? (object)[
-            'total_sales' => 0,
-            'total_profit' => 0,
-            'sales_trend' => 'stable',
-            'low_stock_count' => 0,
-            'out_of_stock_count' => 0,
-            'top_product_id' => null,
-            'top_product_name' => null,
-            'total_predictions_count' => 0,
-            'critical_alerts_count' => 0,
-        ];
+        if (!$aiSnapshot) {
+            $aiSnapshot = (object) [
+                'total_sales' => 0,
+                'total_profit' => 0,
+                'sales_trend' => 'stable',
+                'low_stock_count' => 0,
+                'out_of_stock_count' => 0,
+                'top_product_id' => null,
+                'top_product_name' => null,
+                'total_predictions_count' => 0,
+                'critical_alerts_count' => 0,
+            ];
+        }
 
         // =========================
-        // AI PREDICTIONS
+        // AI PREDICTIONS (SAFE JOIN)
         // =========================
         $aiPredictions = DB::table('ai_predictions')
             ->leftJoin('products', 'ai_predictions.product_id', '=', 'products.id')
@@ -72,7 +73,7 @@ class DashboardController extends Controller
             ->get();
 
         // =========================
-        // AI ALERTS (IMPORTANT)
+        // AI ALERTS
         // =========================
         $aiAlerts = DB::table('ai_alerts')
             ->leftJoin('products', 'ai_alerts.product_id', '=', 'products.id')
@@ -85,7 +86,7 @@ class DashboardController extends Controller
             ->get();
 
         // =========================
-        // RETURN TO UI
+        // RESPONSE
         // =========================
         return Inertia::render('Dashboard', [
             'auth' => [
@@ -93,8 +94,12 @@ class DashboardController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => $user->getRoleNames()->toArray(),
-                    'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+                    'roles' => method_exists($user, 'getRoleNames')
+                        ? $user->getRoleNames()->toArray()
+                        : [],
+                    'permissions' => method_exists($user, 'getAllPermissions')
+                        ? $user->getAllPermissions()->pluck('name')->toArray()
+                        : [],
                 ],
             ],
 
@@ -118,8 +123,17 @@ class DashboardController extends Controller
     public function runAiManually($productId)
     {
         try {
+            $baseUrl = rtrim(env('AI_SERVICE_URL'), '/');
+
+            if (!$baseUrl) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'AI_SERVICE_URL is not configured'
+                ], 500);
+            }
+
             $response = Http::timeout(120)->post(
-                env('AI_SERVICE_URL') . "/run-ai/{$productId}"
+                "{$baseUrl}/run-ai/{$productId}"
             );
 
             if ($response->successful()) {
@@ -136,7 +150,7 @@ class DashboardController extends Controller
                 'error' => $response->body()
             ], 500);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Server error',

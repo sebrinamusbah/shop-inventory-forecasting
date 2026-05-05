@@ -1,21 +1,32 @@
 from fastapi import FastAPI, HTTPException
+import os
+from dotenv import load_dotenv
+
 from app.db import Database
 from app.prophet_engine import ProphetEngine
+
 from app.ai.engines.decision_engine import DecisionEngine
 from app.ai.engines.risk_engine import RiskEngine
 from app.ai.engines.alert_engine import AlertEngine
 from app.ai.engines.llm_engine import ExplanationEngine
-from app.ai.core.inventory_pipeline import InventoryPipeline
-from app.ai_repository import AIRepository
 
-import os
-from dotenv import load_dotenv
+from app.ai.core.pipeline import InventoryPipeline
+from app.ai_repository import AIRepository
 
 load_dotenv()
 
 app = FastAPI()
 
-db = Database(os.getenv("DATABASE_URL"))
+
+# =============================
+# GLOBAL INIT (OK FOR SMALL SCALE)
+# =============================
+DB_URL = os.getenv("DATABASE_URL")
+
+if not DB_URL:
+    raise ValueError("DATABASE_URL is missing")
+
+db = Database(DB_URL)
 
 pipeline = InventoryPipeline(
     db=db,
@@ -29,32 +40,51 @@ pipeline = InventoryPipeline(
 repo = AIRepository(db)
 
 
+# =============================
+# API ENDPOINT
+# =============================
 @app.post("/run-ai/{product_id}")
 def run_ai(product_id: int):
 
     try:
         # =====================
-        # 1. RUN AI PIPELINE
+        # RUN PIPELINE
         # =====================
         context = pipeline.run(product_id)
 
         # =====================
-        # 2. SAVE RESULTS
+        # SAFETY CHECKS (IMPORTANT FIX)
         # =====================
-        repo.save_prediction(context.prediction_result)
-        repo.save_insight(context.insight_result)
+        prediction = getattr(context, "prediction_result", None)
+        insight = getattr(context, "insight_result", None)
+        alerts = getattr(context, "alerts_result", [])
 
-        if hasattr(context, "alerts_result") and context.alerts_result:
-            repo.save_alerts(context.alerts_result)
+        if not prediction:
+            raise ValueError("Missing prediction_result from pipeline")
+
+        if not insight:
+            raise ValueError("Missing insight_result from pipeline")
 
         # =====================
-        # RESPONSE
+        # SAVE RESULTS
+        # =====================
+        repo.save_prediction(prediction)
+        repo.save_insight(insight)
+
+        if alerts:
+            repo.save_alerts(alerts)
+
+        # =====================
+        # RESPONSE (SAFE ACCESS)
         # =====================
         return {
             "status": "success",
             "product_id": product_id,
-            "action": context.decision.get("action") if isinstance(context.decision, dict) else None,
-            "risk_score": context.risk.get("risk_score") if isinstance(context.risk, dict) else None,
+            "action": (context.decision.get("action") if isinstance(context.decision, dict) else None),
+            "risk_score": (context.risk.get("risk_score", 0) if isinstance(context.risk, dict) else 0),
+            "confidence": (context.forecast or {})
+                .get("metrics", {})
+                .get("confidence_score"),
         }
 
     except Exception as e:

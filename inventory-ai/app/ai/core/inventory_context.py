@@ -10,7 +10,6 @@ class InventoryContext:
     # =============================
     product_id: int
 
-    # product info
     sku: Optional[str] = None
     name: Optional[str] = None
     category: Optional[str] = None
@@ -19,7 +18,7 @@ class InventoryContext:
     # INPUT DATA
     # =============================
     sales_data: Optional[Any] = None
-    current_stock: float = 0
+    current_stock: float = 0.0
     periods: int = 30
 
     # =============================
@@ -28,8 +27,14 @@ class InventoryContext:
     forecast: Dict[str, Any] = field(default_factory=dict)
     decision: Dict[str, Any] = field(default_factory=dict)
     risk: Dict[str, Any] = field(default_factory=dict)
+
     explanation: Optional[str] = None
+
     alerts: List[Dict[str, Any]] = field(default_factory=list)
+
+    insight_result: Dict[str, Any] = field(default_factory=dict)
+    prediction_result: Dict[str, Any] = field(default_factory=dict)
+    alerts_result: List[Dict[str, Any]] = field(default_factory=list)
 
     # =============================
     # SYSTEM STATE
@@ -43,7 +48,7 @@ class InventoryContext:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     # =============================
-    # POST INIT (SAFE INITIALIZATION)
+    # INIT
     # =============================
     def __post_init__(self):
         self.metadata.update({
@@ -53,9 +58,8 @@ class InventoryContext:
         })
 
     # =============================
-    # OPTIONAL HELPERS
+    # HELPERS
     # =============================
-
     def add_log(self, message: str):
         self.logs.append(f"{datetime.utcnow().isoformat()} - {message}")
 
