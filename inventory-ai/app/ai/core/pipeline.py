@@ -216,7 +216,8 @@ class InventoryPipeline:
                 self.repo.save_alerts(context.alerts_result)
 
         except Exception as e:
-            logger.exception(f"DB save failed: {e}")
+             logger.exception("DB save failed")
+             raise
 
     # =========================================================
     # DATA CLEANING
