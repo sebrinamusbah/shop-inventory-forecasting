@@ -50,7 +50,9 @@ return new class extends Migration
             // ======================
             // INDEXES (important for dashboard speed)
             // ======================
-            $table->index(['product_id']);
+            $table->unique(
+    ['product_id', 'alert_type']
+);
             $table->index(['alert_type']);
             $table->index(['priority']);
             $table->index(['is_resolved']);

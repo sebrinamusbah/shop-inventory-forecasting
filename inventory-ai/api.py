@@ -19,7 +19,7 @@ app = FastAPI(title="Inventory AI System")
 
 
 # =============================
-# INIT (GLOBAL - OK FOR SMALL/MEDIUM SCALE)
+# INIT
 # =============================
 DB_URL = os.getenv("DATABASE_URL")
 
@@ -27,6 +27,7 @@ if not DB_URL:
     raise ValueError("DATABASE_URL is missing")
 
 db = Database(DB_URL)
+
 repo = AIRepository(db)
 
 pipeline = InventoryPipeline(
@@ -36,12 +37,12 @@ pipeline = InventoryPipeline(
     risk=RiskEngine(),
     explainer=ExplanationEngine(use_llm=False),
     alerts=AlertEngine(),
-    repo=repo   # ✅ FIXED (important)
+    repo=repo
 )
 
 
 # =============================
-# HEALTH CHECK (optional but useful)
+# HEALTH
 # =============================
 @app.get("/health")
 def health():
@@ -52,60 +53,34 @@ def health():
 
 
 # =============================
-# MAIN AI ENDPOINT
+# RUN AI FOR SINGLE PRODUCT
 # =============================
 @app.post("/run-ai/{product_id}")
 def run_ai(product_id: int):
 
     try:
-        # =====================
-        # RUN PIPELINE
-        # =====================
+
         context = pipeline.run(product_id)
 
         if not context:
             raise ValueError("Pipeline returned no context")
 
-        prediction = getattr(context, "prediction_result", None)
-        insight = getattr(context, "insight_result", None)
-        alerts = getattr(context, "alerts_result", [])
-        decision = getattr(context, "decision", {})
-        risk = getattr(context, "risk", {})
-        forecast = getattr(context, "forecast", {})
-
-        # =====================
-        # VALIDATION
-        # =====================
-        if not prediction:
-            raise ValueError("Missing prediction_result")
-
-        if not insight:
-            raise ValueError("Missing insight_result")
-
-        # =====================
-        # RESPONSE (FULL STRUCTURE)
-        # =====================
         return {
             "status": "success",
 
             "product_id": product_id,
 
-            # MAIN AI OUTPUTS
-            "prediction": prediction,
-            "insight": insight,
-            "alerts": alerts,
+            "prediction": getattr(context, "prediction_result", None),
 
-            # EXTRA ENGINE OUTPUTS
-            "decision": decision,
-            "risk": risk,
+            "insight": getattr(context, "insight_result", None),
 
-            # META INFO
-            "meta": {
-                "confidence": (
-                    forecast.get("metrics", {}).get("confidence_score")
-                    if forecast else None
-                )
-            }
+            "alerts": getattr(context, "alerts_result", []),
+
+            "decision": getattr(context, "decision", {}),
+
+            "risk": getattr(context, "risk", {}),
+
+            "forecast": getattr(context, "forecast", {}),
         }
 
     except Exception as e:
@@ -113,3 +88,26 @@ def run_ai(product_id: int):
             status_code=500,
             detail=f"AI execution failed: {str(e)}"
         )
+
+
+# =============================
+# RUN AI FOR ALL PRODUCTS
+# =============================
+@app.post("/run-ai-all")
+def run_ai_all():
+    products = db.fetch_all("SELECT id FROM products")
+
+    results = []
+
+    for p in products:
+        result = pipeline.run(p["id"])
+        results.append({
+            "product_id": p["id"],
+            "result": result
+        })
+
+    return {
+        "success": True,
+        "count": len(results),
+        "results": results
+    }

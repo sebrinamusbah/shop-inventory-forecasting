@@ -19,6 +19,8 @@ return new class extends Migration
                 ->constrained()
                 ->nullOnDelete();
 
+
+                $table->unique('product_id');
             // ======================
             // PRODUCT INFO (DENORMALIZED)
             // ======================

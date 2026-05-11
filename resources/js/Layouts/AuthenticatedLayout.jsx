@@ -1,8 +1,6 @@
 import { usePage, Link, useForm, router } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 
-
-
 export default function AuthenticatedLayout({ header, children }) {
     const { auth } = usePage().props;
     const user = auth.user;
@@ -204,17 +202,26 @@ export default function AuthenticatedLayout({ header, children }) {
             href: "/suppliers",
             permission: null,
         },
-            {
-        name: "Stock Adjustment",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 6v6l4 2M6 6h12M6 18h12" />
-            </svg>
-        ),
-        href: "/stock-adjustments/create",
-        permission: null,
-    },
+        {
+            name: "Stock Adjustment",
+            icon: (
+                <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6l4 2M6 6h12M6 18h12"
+                    />
+                </svg>
+            ),
+            href: "/stock-adjustments/create",
+            permission: null,
+        },
 
         {
             name: "Analytics",
@@ -253,7 +260,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     />
                 </svg>
             ),
-            href: route('profit.index'),
+            href: route("profit.index"),
             permission: "view profit reports",
         },
         {
@@ -298,11 +305,11 @@ export default function AuthenticatedLayout({ header, children }) {
             )}
 
             {/* ===== SIDEBAR (YOUR EXACT UI) ===== */}
-           <aside
-    className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-20 flex flex-col ${
-        sidebarOpen ? "w-64" : "w-20"
-    }`}
-     >
+            <aside
+                className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-20 flex flex-col ${
+                    sidebarOpen ? "w-64" : "w-20"
+                }`}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     {sidebarOpen && (
@@ -323,7 +330,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
 
                 {/* Navigation */}
-              <nav className="mt-6 flex-1 overflow-y-auto">
+                <nav className="mt-6 flex-1 overflow-y-auto">
                     {visibleNavigationItems.map((item, index) => (
                         <Link
                             key={index}
@@ -352,61 +359,67 @@ export default function AuthenticatedLayout({ header, children }) {
                 {/* Bottom User */}
                 <div className="p-4 border-t border-gray-200">
                     <div
-    className={`flex items-center ${
-        sidebarOpen ? "justify-between" : "justify-center"
-    }`}
->
-    {sidebarOpen ? (
-        // ✅ FULL USER INFO
-        <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600">
-                    {user.name?.charAt(0) || "U"}
-                </span>
-            </div>
+                        className={`flex items-center ${
+                            sidebarOpen ? "justify-between" : "justify-center"
+                        }`}
+                    >
+                        {sidebarOpen ? (
+                            // ✅ FULL USER INFO
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <span className="text-sm font-medium text-gray-600">
+                                        {user.name?.charAt(0) || "U"}
+                                    </span>
+                                </div>
 
-            <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                    {user.name}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                    {user.email}
-                </p>
-            </div>
-        </div>
-    ) : (
-        // ✅ ONLY ICON WHEN COLLAPSED
-        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-600">
-                {user.name?.charAt(0) || "U"}
-            </span>
-        </div>
-    )}
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                        {user.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate">
+                                        {user.email}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            // ✅ ONLY ICON WHEN COLLAPSED
+                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-gray-600">
+                                    {user.name?.charAt(0) || "U"}
+                                </span>
+                            </div>
+                        )}
 
-    {/* LOGOUT */}
-  <button
-    onClick={() => post("/logout")}
-    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
->
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        {/* square (box) */}
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 4h10v16H4z"
-        />
+                        {/* LOGOUT */}
+                        <button
+                            onClick={() => post("/logout")}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                            >
+                                {/* square (box) */}
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 4h10v16H4z"
+                                />
 
-        {/* arrow exiting left side */}
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M14 12h6m0 0l-2-2m2 2l-2 2"
-        />
-    </svg>
-</button>
-</div>
+                                {/* arrow exiting left side */}
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M14 12h6m0 0l-2-2m2 2l-2 2"
+                                />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </aside>
 

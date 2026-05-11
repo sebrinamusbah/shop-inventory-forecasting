@@ -4,13 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Sale;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+
 use Inertia\Inertia;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    // =========================
+    // DASHBOARD
+    // =========================
     public function index()
     {
         $user = auth()->user();
@@ -18,18 +23,25 @@ class DashboardController extends Controller
         // =========================
         // BUSINESS DATA
         // =========================
-        $lowStockProducts = Product::whereColumn('current_quantity', '<=', 'min_stock_level')
+        $lowStockProducts = Product::whereColumn(
+                'current_quantity',
+                '<=',
+                'min_stock_level'
+            )
             ->with('category')
             ->get();
 
-        $todaySales = Sale::whereDate('sale_date', Carbon::today())
+        $todaySales = Sale::whereDate(
+                'sale_date',
+                Carbon::today()
+            )
             ->sum('total_amount');
 
         // =========================
-        // AI SNAPSHOT (LATEST SAFE)
+        // AI SNAPSHOT
         // =========================
         $aiSnapshot = DB::table('ai_snapshots')
-            ->orderByDesc('id')
+            ->latest('id')
             ->first();
 
         if (!$aiSnapshot) {
@@ -47,72 +59,102 @@ class DashboardController extends Controller
         }
 
         // =========================
-        // AI PREDICTIONS (SAFE JOIN)
+        // LATEST AI PREDICTIONS
+        // IMPORTANT:
+        // only latest prediction per product
         // =========================
+        $latestPredictionIds = DB::table('ai_predictions')
+            ->select(DB::raw('MAX(id) as id'))
+            ->groupBy('product_id');
+
         $aiPredictions = DB::table('ai_predictions')
+            ->joinSub($latestPredictionIds, 'latest', function ($join) {
+                $join->on('ai_predictions.id', '=', 'latest.id');
+            })
             ->leftJoin('products', 'ai_predictions.product_id', '=', 'products.id')
             ->select(
                 'ai_predictions.*',
-                DB::raw('COALESCE(products.name, "Unknown") as product_name')
+                DB::raw('COALESCE(products.name, ai_predictions.product_name) as product_name')
             )
-            ->orderByDesc('ai_predictions.id')
-            ->limit(20)
+            ->orderByDesc('ai_predictions.updated_at')
             ->get();
 
         // =========================
-        // AI INSIGHTS
+        // LATEST AI INSIGHTS
         // =========================
+        $latestInsightIds = DB::table('ai_insights')
+            ->select(DB::raw('MAX(id) as id'))
+            ->groupBy('product_id');
+
         $aiInsights = DB::table('ai_insights')
+            ->joinSub($latestInsightIds, 'latest', function ($join) {
+                $join->on('ai_insights.id', '=', 'latest.id');
+            })
             ->leftJoin('products', 'ai_insights.product_id', '=', 'products.id')
             ->select(
                 'ai_insights.*',
-                DB::raw('COALESCE(products.name, "Unknown") as product_name')
+                DB::raw('COALESCE(products.name, ai_insights.product_name) as product_name')
             )
-            ->orderByDesc('ai_insights.id')
-            ->limit(20)
+            ->orderByDesc('ai_insights.updated_at')
             ->get();
 
         // =========================
-        // AI ALERTS
+        // ACTIVE AI ALERTS
         // =========================
         $aiAlerts = DB::table('ai_alerts')
             ->leftJoin('products', 'ai_alerts.product_id', '=', 'products.id')
             ->select(
                 'ai_alerts.*',
-                DB::raw('COALESCE(products.name, "Unknown") as product_name')
+                DB::raw('COALESCE(products.name, ai_alerts.product_name) as product_name')
             )
-            ->orderByDesc('ai_alerts.id')
-            ->limit(20)
+            ->where('ai_alerts.is_resolved', false)
+            ->orderByDesc('ai_alerts.updated_at')
+            ->limit(50)
             ->get();
 
         // =========================
         // RESPONSE
         // =========================
         return Inertia::render('Dashboard', [
+
             'auth' => [
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+
                     'roles' => method_exists($user, 'getRoleNames')
                         ? $user->getRoleNames()->toArray()
                         : [],
+
                     'permissions' => method_exists($user, 'getAllPermissions')
-                        ? $user->getAllPermissions()->pluck('name')->toArray()
+                        ? $user->getAllPermissions()
+                            ->pluck('name')
+                            ->toArray()
                         : [],
                 ],
             ],
 
+            // =========================
             // BUSINESS
+            // =========================
             'totalProducts' => Product::count(),
+
             'lowStockCount' => $lowStockProducts->count(),
+
             'lowStockProducts' => $lowStockProducts,
+
             'todaySales' => $todaySales,
 
-            // AI SYSTEM
+            // =========================
+            // AI
+            // =========================
             'aiSnapshot' => $aiSnapshot,
+
             'aiPredictions' => $aiPredictions,
+
             'aiInsights' => $aiInsights,
+
             'aiAlerts' => $aiAlerts,
         ]);
     }
@@ -123,20 +165,30 @@ class DashboardController extends Controller
     public function runAiManually($productId)
     {
         try {
+
+            // IMPORTANT
+            // Example:
+            // AI_SERVICE_URL=http://127.0.0.1:8000
             $baseUrl = rtrim(env('AI_SERVICE_URL'), '/');
 
             if (!$baseUrl) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'AI_SERVICE_URL is not configured'
+                    'message' => 'AI_SERVICE_URL missing'
                 ], 500);
             }
 
-            $response = Http::timeout(120)->post(
-                "{$baseUrl}/run-ai/{$productId}"
-            );
+            // =========================
+            // CALL FASTAPI
+            // =========================
+            $response = Http::timeout(120)
+                ->post("{$baseUrl}/run-ai/{$productId}");
 
+            // =========================
+            // SUCCESS
+            // =========================
             if ($response->successful()) {
+
                 return response()->json([
                     'success' => true,
                     'message' => 'AI executed successfully',
@@ -144,6 +196,9 @@ class DashboardController extends Controller
                 ]);
             }
 
+            // =========================
+            // FAILED RESPONSE
+            // =========================
             return response()->json([
                 'success' => false,
                 'message' => 'AI execution failed',
@@ -151,6 +206,7 @@ class DashboardController extends Controller
             ], 500);
 
         } catch (\Throwable $e) {
+
             return response()->json([
                 'success' => false,
                 'message' => 'Server error',
@@ -158,4 +214,5 @@ class DashboardController extends Controller
             ], 500);
         }
     }
+
 }

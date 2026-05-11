@@ -18,6 +18,9 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+                  // ONE ROW PER PRODUCT
+             $table->unique('product_id');
+
             // ======================
             // PRODUCT INFO (DENORMALIZED for speed)
             // ======================

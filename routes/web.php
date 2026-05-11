@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\AIDashboardController;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Application;
@@ -39,11 +40,23 @@ Route::post('/logout', function () {
 // --- Authenticated routes ---
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // 🚀 MANUAL AI RUN
-Route::post('/ai/run/{productId}', [DashboardController::class, 'runAiManually'])
-    ->name('ai.run');
+     // =========================
+    // MAIN DASHBOARD
+    // =========================
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    // =========================
+    // AI ROUTES
+    // =========================
+ Route::prefix('ai')->group(function () {
+
+    Route::get('/dashboard', [AIDashboardController::class, 'dashboard']);
+
+    Route::post('/run/{productId}', [DashboardController::class, 'runAiManually']);
+
+    Route::post('/run-all', [DashboardController::class, 'runAllAi']);
+});
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
