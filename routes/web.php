@@ -109,9 +109,12 @@ Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'des
 
 
     // Analytics & Profit Reports
-    Route::middleware(['permission:view analytics'])->group(function () {
-        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
-    });
+   Route::middleware(['permission:view analytics'])->group(function () {
+
+    Route::get('/analytics', [AIDashboardController::class, 'dashboard'])
+        ->name('analytics.index');
+
+});
 
     Route::middleware(['permission:view profit reports'])->group(function () {
         Route::get('/profit', [ReportController::class, 'index'])->name('profit.index');
