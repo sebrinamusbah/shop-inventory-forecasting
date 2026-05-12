@@ -2,25 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\AIAlert;
+use App\Models\AIPrediction;
+use App\Models\AIInsight;
 
 class AIDashboardController extends Controller
 {
     public function dashboard()
     {
-        return response()->json([
-            'predictions' => DB::table('ai_predictions')
-                ->latest('updated_at')
-                ->get(),
+        $predictions = AIPrediction::latest()->get();
+    $insights = AIInsight::latest()->get();
+    $alerts = AIAlert::latest()->get();
 
-            'insights' => DB::table('ai_insights')
-                ->latest('updated_at')
-                ->get(),
-
-            'alerts' => DB::table('ai_alerts')
-                ->where('is_resolved', false)
-                ->latest('updated_at')
-                ->get(),
-        ]);
-    }
+    return inertia('Analytics', [
+        'predictions' => $predictions,
+        'insights' => $insights,
+        'alerts' => $alerts,
+    ]);
+}
 }
