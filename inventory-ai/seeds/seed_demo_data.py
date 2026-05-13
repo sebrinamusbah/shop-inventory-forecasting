@@ -27,7 +27,7 @@ def reset_data():
 
         conn.execute(text("SET FOREIGN_KEY_CHECKS=1"))
 
-    print("✅ Database reset complete")
+    print("Database reset complete")
 
 
 # =========================================
@@ -54,7 +54,7 @@ def seed_categories():
             "now": now
         })
 
-    print("✅ Categories seeded")
+    print(" Categories seeded")
 
 
 # =========================================
@@ -200,7 +200,7 @@ def seed_products():
                 "now": now
             })
 
-    print("✅ Products seeded")
+    print(" Products seeded")
 
 
 # =========================================
@@ -417,7 +417,7 @@ def seed_sales(days=60):
                     "now": day
                 })
 
-    print("✅ FULL AI-ready dataset generated")
+    print("FULL AI-ready dataset generated")
 
 
 # =========================================
@@ -433,4 +433,4 @@ if __name__ == "__main__":
 
     seed_sales(60)
 
-    print("🚀 Demo AI inventory dataset ready")
+    print(" Demo AI inventory dataset ready")

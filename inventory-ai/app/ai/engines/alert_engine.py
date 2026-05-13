@@ -22,7 +22,7 @@ class AlertEngine:
         if product_id is None:
             return []
 
-        # 🔴 FIX 1: duplicate bug removed
+        #  FIX 1: duplicate bug removed
         stock = float(product.get("current_quantity") or 0)
 
         confidence = float(metrics.get("confidence_score") or 0)

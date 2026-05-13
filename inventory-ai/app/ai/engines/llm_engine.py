@@ -26,10 +26,10 @@ class ExplanationEngine:
         product = forecast.get("product") or {}
         metrics = forecast.get("metrics") or {}
 
-        # 🔴 FIX 2: clear demand definition
+        #  FIX 2: clear demand definition
         total_demand = float(metrics.get("predicted_demand") or 0)
 
-        # 🔴 FIX 1: single stock source (no duplicates)
+        #  FIX 1: single stock source (no duplicates)
         stock = float(product.get("current_quantity") or 0)
 
         periods = forecast.get("model_meta", {}).get("periods", 30)
@@ -106,7 +106,7 @@ class ExplanationEngine:
             }
 
         # =============================
-        # 🔴 FIX 4: IMPROVED OVERSTOCK LOGIC
+        #  FIX 4: IMPROVED OVERSTOCK LOGIC
         # =============================
         safety_buffer = demand * 0.2
 
@@ -124,7 +124,7 @@ class ExplanationEngine:
             }
 
         # =============================
-        # 🔴 FIX 3 + 5: BETTER LOW CONFIDENCE MESSAGE
+        #  FIX 3 + 5: BETTER LOW CONFIDENCE MESSAGE
         # =============================
         if confidence is not None and confidence < 0.2:
             return {

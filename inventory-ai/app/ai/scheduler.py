@@ -24,7 +24,7 @@ class InventoryScheduler:
             product_ids = self.db.get_all_product_ids() or []
 
             if not product_ids:
-                self.logger.warning("⚠️ No products found")
+                self.logger.warning("No products found")
                 return
 
             for pid in product_ids:
@@ -38,7 +38,7 @@ class InventoryScheduler:
 
                 self.logger.info(f"[DEMO] Product {pid} → {action}")
 
-            self.logger.info("✅ DEMO RUN COMPLETE")
+            self.logger.info(" DEMO RUN COMPLETE")
 
         except Exception as e:
             self.logger.exception(f"❌ Demo error: {e}")
@@ -112,7 +112,7 @@ class InventoryScheduler:
 
             self.repo.save_snapshot(snapshot)
 
-            self.logger.info("✅ DAILY SNAPSHOT COMPLETE")
+            self.logger.info(" DAILY SNAPSHOT COMPLETE")
 
         except Exception as e:
             self.logger.exception(f"❌ Snapshot error: {e}")
@@ -147,7 +147,7 @@ class InventoryScheduler:
             max_instances=1
         )
 
-        self.logger.info(f"📌 Daily job registered at {run_hour}:00")
+        self.logger.info(f" Daily job registered at {run_hour}:00")
 
     # =========================================================
     # START / STOP (FIXED SAFE)
@@ -156,7 +156,7 @@ class InventoryScheduler:
 
         if not self.scheduler.running:
             self.scheduler.start()
-            self.logger.info("🚀 Scheduler STARTED")
+            self.logger.info(" Scheduler STARTED")
 
     def stop(self):
 

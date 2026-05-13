@@ -20,7 +20,7 @@ class ProductController extends Controller
         ]);
     }
 
-    // ✅ CREATE PRODUCT (FIXED)
+    // CREATE PRODUCT (FIXED)
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -38,7 +38,7 @@ class ProductController extends Controller
         return back()->with('success', 'Product created');
     }
 
-    // ✅ UPDATE PRODUCT
+    //  UPDATE PRODUCT
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([

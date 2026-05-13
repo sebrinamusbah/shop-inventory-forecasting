@@ -32,11 +32,11 @@ if os.path.exists(requirements_file):
     print("📦 Installing dependencies...")
     subprocess.check_call([python_path, "-m", "pip", "install", "-r", requirements_file])
 else:
-    print("❌ requirements.txt not found!")
+    print(" requirements.txt not found!")
 
-print("\n✅ Setup complete!")
+print("\n Setup complete!")
 
-print("\n👉 Activate environment:")
+print("\n Activate environment:")
 
 if platform.system() == "Windows":
     print("   venv\\Scripts\\activate")

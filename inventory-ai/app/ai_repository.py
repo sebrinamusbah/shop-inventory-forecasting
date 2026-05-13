@@ -107,10 +107,10 @@ class AIRepository:
                 "updated_at": now
             })
 
-            logger.info("✅ Prediction upserted")
+            logger.info(" Prediction upserted")
 
         except Exception:
-            logger.exception("❌ save_prediction failed")
+            logger.exception("save_prediction failed")
             raise
 
     # =========================================================
@@ -183,10 +183,10 @@ class AIRepository:
                 "updated_at": now
             })
 
-            logger.info("💡 Insight upserted")
+            logger.info("💡Insight upserted")
 
         except Exception:
-            logger.exception("❌ save_insight failed")
+            logger.exception(" save_insight failed")
             raise
 
     # =========================================================
@@ -374,10 +374,10 @@ class AIRepository:
                 "updated_at": now
             })
 
-            logger.info("📊 Snapshot upserted")
+            logger.info("Snapshot upserted")
 
         except Exception:
-            logger.exception("❌ save_snapshot failed")
+            logger.exception("save_snapshot failed")
             raise
 
     # =========================================================

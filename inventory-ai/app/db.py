@@ -20,7 +20,7 @@ class Database:
             max_overflow=20,
             future=True
         )
-        logger.info("✅ Database connection initialized")
+        logger.info("Database connection initialized")
 
     # =========================================================
     # TRANSACTION

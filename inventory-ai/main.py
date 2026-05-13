@@ -44,7 +44,7 @@ def main():
     if not DB_URL:
         raise ValueError("DATABASE_URL is missing")
 
-    logger.info("🚀 SYSTEM BOOTING...")
+    logger.info(" SYSTEM BOOTING...")
 
     # =========================
     # INIT CORE
@@ -73,18 +73,18 @@ def main():
     # REGISTER JOBS
     # =========================
     if MODE == "demo":
-        logger.info("🧪 DEMO MODE ACTIVE (1-minute interval)")
+        logger.info("DEMO MODE ACTIVE (1-minute interval)")
         scheduler.start_interval(minutes=1)
 
     elif MODE == "production":
-        logger.info("🏭 PRODUCTION MODE ACTIVE (daily snapshot)")
+        logger.info("PRODUCTION MODE ACTIVE (daily snapshot)")
         scheduler.start_daily(run_hour=2)
 
     else:
         logger.warning("Invalid APP_MODE → defaulting to demo")
         scheduler.start_interval(minutes=1)
 
-    logger.info(f"🚀 SYSTEM RUNNING IN {MODE.upper()} MODE")
+    logger.info(f"SYSTEM RUNNING IN {MODE.upper()} MODE")
 
     # =========================
     # KEEP ALIVE LOOP
@@ -94,7 +94,7 @@ def main():
             time.sleep(5)
 
     except KeyboardInterrupt:
-        logger.info("🛑 Shutting down system...")
+        logger.info(" Shutting down system...")
         scheduler.stop()
 
 
