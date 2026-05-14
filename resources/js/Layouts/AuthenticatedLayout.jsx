@@ -74,63 +74,33 @@ export default function AuthenticatedLayout({ header, children }) {
     // ===== PERMISSION HELPER =====
     const can = (permission) => permissions.includes(permission);
 
-    // ===== YOUR ORIGINAL NAV ITEMS (KEEP YOUR ICONS HERE) =====
+    // ===== UPDATED NAV ITEMS =====
     const navigationItems = [
         {
             name: "Dashboard",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
             ),
             href: "/dashboard",
-            permission: null,
+            permission: null, // Always visible
         },
         {
             name: "Products",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             ),
             href: "/products",
-            permission: "view products",
+            permission: "view products", // Visible to Employee & Admin
         },
         {
             name: "Categories",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l5 5a2 2 0 011.414.586 2 2 0 011.414.586L21 13a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-5-5a2 2 0 01-.586-1.414V9a2 2 0 011-1.732V7a2 2 0 01-2-2z"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l5 5a2 2 0 011.414.586 2 2 0 011.414.586L21 13a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-5-5a2 2 0 01-.586-1.414V9a2 2 0 011-1.732V7a2 2 0 01-2-2z" />
                 </svg>
             ),
             href: "/categories",
@@ -139,38 +109,18 @@ export default function AuthenticatedLayout({ header, children }) {
         {
             name: "Sales",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             ),
             href: "/sales",
-            permission: "create sales",
+            permission: "create sales", // Visible to Employee & Admin
         },
         {
             name: "Purchases",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             ),
             href: "/purchases",
@@ -179,65 +129,29 @@ export default function AuthenticatedLayout({ header, children }) {
         {
             name: "Suppliers",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1" />
                 </svg>
             ),
             href: "/suppliers",
-            permission: null,
+            permission: "manage users", // Changed from null to a restricted permission
         },
         {
             name: "Stock Adjustment",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6l4 2M6 6h12M6 18h12"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2M6 6h12M6 18h12" />
                 </svg>
             ),
             href: "/stock-adjustments/create",
-            permission: null,
+            permission: "manage users", // Changed from null to a restricted permission
         },
-
         {
             name: "Analytics",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
             ),
             href: "/analytics",
@@ -246,18 +160,8 @@ export default function AuthenticatedLayout({ header, children }) {
         {
             name: "Profit Reports",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
             ),
             href: route("profit.index"),
@@ -266,18 +170,8 @@ export default function AuthenticatedLayout({ header, children }) {
         {
             name: "Users",
             icon: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
             ),
             href: "/users",
@@ -304,7 +198,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             )}
 
-            {/* ===== SIDEBAR (YOUR EXACT UI) ===== */}
+            {/* ===== SIDEBAR ===== */}
             <aside
                 className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-20 flex flex-col ${
                     sidebarOpen ? "w-64" : "w-20"
@@ -364,7 +258,6 @@ export default function AuthenticatedLayout({ header, children }) {
                         }`}
                     >
                         {sidebarOpen ? (
-                            // ✅ FULL USER INFO
                             <div className="flex items-center space-x-2">
                                 <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                                     <span className="text-sm font-medium text-gray-600">
@@ -382,7 +275,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </div>
                             </div>
                         ) : (
-                            // ✅ ONLY ICON WHEN COLLAPSED
                             <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                                 <span className="text-sm font-medium text-gray-600">
                                     {user.name?.charAt(0) || "U"}
@@ -390,7 +282,6 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         )}
 
-                        {/* LOGOUT */}
                         <button
                             onClick={() => post("/logout")}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
@@ -402,21 +293,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                 fill="none"
                                 stroke="currentColor"
                             >
-                                {/* square (box) */}
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 4h10v16H4z"
-                                />
-
-                                {/* arrow exiting left side */}
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M14 12h6m0 0l-2-2m2 2l-2 2"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h10v16H4z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 12h6m0 0l-2-2m2 2l-2 2" />
                             </svg>
                         </button>
                     </div>
@@ -427,7 +305,6 @@ export default function AuthenticatedLayout({ header, children }) {
             <div
                 className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}
             >
-                {/* HEADER */}
                 <div className="bg-white border-b px-6 py-6">
                     {header ? (
                         header
@@ -438,7 +315,6 @@ export default function AuthenticatedLayout({ header, children }) {
                     )}
                 </div>
 
-                {/* CONTENT */}
                 <main className="p-6">{children}</main>
             </div>
         </div>
