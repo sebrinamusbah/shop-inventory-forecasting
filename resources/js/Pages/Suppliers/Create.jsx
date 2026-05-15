@@ -17,12 +17,18 @@ export default function Create({ auth }) {
         post(route('suppliers.store'));
     };
 
+    // Helper to filter out non-numeric characters (allows + for phone)
+    const handleNumericChange = (field, value, allowPlus = false) => {
+        const regex = allowPlus ? /[^0-9+]/g : /[^0-9]/g;
+        const cleanedValue = value.replace(regex, '');
+        setData(field, cleanedValue);
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
             header={
                 <div className="flex items-center gap-4">
-                    {/* Arrow Link removed from here */}
                     <h2 className="font-semibold text-xl text-gray-800 leading-tight">
                         Add New Supplier
                     </h2>
@@ -60,39 +66,40 @@ export default function Create({ auth }) {
                                 {errors.email && <div className="text-red-500 text-xs mt-1">{errors.email}</div>}
                             </div>
 
-                            {/* Phone Field */}
+                            {/* Phone Field - Allows numbers and + */}
                             <div className="mb-4">
                                 <label className="block text-sm font-bold text-black mb-2">Phone Number</label>
                                 <input
                                     type="text"
                                     className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     value={data.phone}
-                                    onChange={e => setData('phone', e.target.value)}
+                                    onChange={e => handleNumericChange('phone', e.target.value, true)}
                                     placeholder="e.g. +251..."
                                 />
                                 {errors.phone && <div className="text-red-500 text-xs mt-1">{errors.phone}</div>}
                             </div>
-                            {/* TIN Number Field */}
+
+                            {/* TIN Number Field - Numbers only */}
                             <div className="mb-4">
                                 <label className="block text-sm font-bold text-black mb-2">TIN Number</label>
                                 <input
                                     type="text"
                                     className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     value={data.tin_number}
-                                    onChange={e => setData('tin_number', e.target.value)}
+                                    onChange={e => handleNumericChange('tin_number', e.target.value)}
                                     placeholder="e.g. 0101..."
                                 />
                                 {errors.tin_number && <div className="text-red-500 text-xs mt-1">{errors.tin_number}</div>}
                             </div>
 
-                            {/* Account Number Field */}
+                            {/* Account Number Field - Numbers only */}
                             <div className="mb-4">
                                 <label className="block text-sm font-bold text-black mb-2">Account Number</label>
                                 <input
                                     type="text"
                                     className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     value={data.account_number}
-                                    onChange={e => setData('account_number', e.target.value)}
+                                    onChange={e => handleNumericChange('account_number', e.target.value)}
                                     placeholder="e.g. 1000..."
                                 />
                                 {errors.account_number && <div className="text-red-500 text-xs mt-1">{errors.account_number}</div>}

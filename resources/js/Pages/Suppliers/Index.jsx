@@ -16,27 +16,6 @@ export default function Index({ auth, suppliers }) {
             header={
                 <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-4">
-
-                        {/* BACK ARROW BUTTON - Consistent with Sales & Purchase */}
-                      { /* <Link
-                            href={route('dashboard')}
-                            className="bg-black p-3 rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center shadow-sm border border-black"
-                        >
-                            <svg
-                                className="w-5 h-5 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2.5}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
-                        </Link> */}
-
                         <div>
                             <h2 className="font-bold text-3xl text-gray-900 tracking-tight">Suppliers</h2>
                             <p className="text-sm text-gray-500 font-medium">Manage your supply partners and contact details</p>
@@ -57,45 +36,46 @@ export default function Index({ auth, suppliers }) {
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                    {/* Table Container */}
-                    <div className="bg-white overflow-visible shadow-sm sm:rounded-2xl border border-gray-100">
-                        <table className="w-full table-fixed divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                    {/* Table Container - Added overflow-x-auto for responsiveness */}
+                    <div className="bg-white overflow-x-auto shadow-sm sm:rounded-2xl border border-gray-100">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    {/* Updated Headers: Changed text-gray-400 to text-black */}
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest w-28">Name</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest w-48">Email</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest w-32">Phone</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest w-32">TIN Number</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest w-40">Account Number</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold text-black uppercase tracking-widest">Address</th>
-                                    <th className="px-4 py-4 text-right text-xs font-bold text-black uppercase tracking-widest w-28">Actions</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider w-40">Name</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider w-56">Email</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider w-36">Phone</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider w-40">TIN Number</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider w-48">Account Number</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-black uppercase tracking-wider">Address</th>
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-black uppercase tracking-wider w-32">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100">
                                 {suppliers.length > 0 ? (
                                     suppliers.map((supplier) => (
                                         <tr key={supplier.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-4 py-5 text-sm font-bold text-gray-900 break-words">
+                                            <td className="px-6 py-4 text-sm font-bold text-gray-900">
                                                 {supplier.name}
                                             </td>
-                                            <td className="px-4 py-5 text-sm text-gray-500 break-words">
+                                            <td className="px-6 py-4 text-sm text-gray-600">
                                                 {supplier.email || '—'}
                                             </td>
-                                            <td className="px-4 py-5 text-sm text-gray-500 break-words">
+                                            <td className="px-6 py-4 text-sm text-gray-600">
                                                 {supplier.phone || '—'}
                                             </td>
-                                            <td className="px-4 py-5 text-sm text-gray-400 break-words">
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {supplier.tin_number || '—'}
                                             </td>
-                                            <td className="px-4 py-5 text-sm text-gray-400 break-words">
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {supplier.account_number || '—'}
                                             </td>
-                                            <td className="px-4 py-5 text-sm text-gray-400 break-words">
-                                                {supplier.address || '—'}
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                <div className="max-w-xs truncate" title={supplier.address}>
+                                                    {supplier.address || '—'}
+                                                </div>
                                             </td>
-                                            <td className="px-4 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex justify-end items-center gap-4">
+                                            <td className="px-6 py-4 text-right text-sm font-medium">
+                                                <div className="flex justify-end items-center gap-3">
                                                     <Link
                                                         href={route('suppliers.edit', supplier.id)}
                                                         className="text-blue-600 hover:text-blue-800 transition-colors font-bold"
