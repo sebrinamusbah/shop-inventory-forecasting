@@ -40,88 +40,70 @@ Route::post('/logout', function () {
 // --- Authenticated routes ---
 Route::middleware(['auth', 'verified'])->group(function () {
 
-     // =========================
-    // MAIN DASHBOARD
-    // =========================
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
-
-    // =========================
-    // AI ROUTES
-    // =========================
- Route::prefix('ai')->group(function () {
-
-    Route::get('/dashboard', [AIDashboardController::class, 'dashboard']);
-
-    Route::post('/run/{productId}', [DashboardController::class, 'runAiManually']);
-
-    Route::post('/run-all', [DashboardController::class, 'runAllAi']);
-});
+    // ==========================================
+    // SHARED ROUTES (Admin & Employee)
+    // ==========================================
+    
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // User Management - Admin only
+    // Products & Categories (Viewing/Managing as per your requirement)
+    Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
+    Route::resource('products', ProductController::class)->except(['create', 'edit', 'show']);
+    
+    // Sales
+    Route::resource('sales', SaleController::class);
+
+    // Purchases (Allowing access for both for now)
+    Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+    Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
+    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::post('/purchases/{id}/update-payment', [PurchaseController::class, 'updatePaymentStatus'])->name('purchases.updatePayment');
+    Route::get('/purchases/get-products/{categoryId}', [PurchaseController::class, 'getProductsByCategory'])->name('purchases.getProducts');
+    Route::resource('purchases', PurchaseController::class)->except(['index', 'create', 'store']);
+
+    // ==========================================
+    // ADMIN ONLY ROUTES (Restricted)
+    // ==========================================
+
     Route::middleware(['permission:manage users'])->group(function () {
+        // User Management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Suppliers - RESTRICTED
+        Route::resource('suppliers', SupplierController::class);
+
+        // Stock Adjustments - RESTRICTED
+        Route::get('/stock-adjustments/create', [StockAdjustmentController::class, 'create'])->name('stock-adjustments.create');
+        Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])->name('stock-adjustments.store');
+        Route::put('/stock-adjustments/{id}', [StockAdjustmentController::class, 'update']);
+        Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'destroy']);
+
+        // AI Management (Manual triggers)
+        Route::post('/ai/run/{productId}', [DashboardController::class, 'runAiManually']);
+        Route::post('/ai/run-all', [DashboardController::class, 'runAllAi']);
     });
 
-    // Categories, Products, and Suppliers
-    Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
-    Route::resource('products', ProductController::class)->except(['create', 'edit', 'show']);
-    Route::resource('suppliers', SupplierController::class);
-    // Stock Adjustments
-Route::get('/stock-adjustments/create', [StockAdjustmentController::class, 'create'])
-    ->name('stock-adjustments.create');
+    // ==========================================
+    // ANALYTICS & REPORTS
+    // ==========================================
 
-Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
-    ->name('stock-adjustments.store');
-    Route::put('/stock-adjustments/{id}', [StockAdjustmentController::class, 'update']);
-Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'destroy']);
-Route::put('/stock-adjustments/{id}', [StockAdjustmentController::class, 'update']);
-Route::delete('/stock-adjustments/{id}', [StockAdjustmentController::class, 'destroy']);
-    // Sales Routes
-    Route::resource('sales', SaleController::class);
-
-    // --- Purchases Section (Cleaned Up) ---
-    
-    // 1. Index (List)
-    Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
-
-    // 2. Creation & Storage (Moved outside specific permission for testing)
-    Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
-    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
-    Route::post('/purchases/{id}/update-payment', [PurchaseController::class, 'updatePaymentStatus'])->name('purchases.updatePayment');
-    
-    // 3. Dynamic Filter Route
-    Route::get('/purchases/get-products/{categoryId}', [PurchaseController::class, 'getProductsByCategory'])
-        ->name('purchases.getProducts');
-
-    // 4. Other Actions (Show, Edit, Update, Destroy)
-    Route::resource('purchases', PurchaseController::class)->except(['index', 'create', 'store']);
-
-    
-
-
-    // Analytics & Profit Reports
-   Route::middleware(['permission:view analytics'])->group(function () {
-
-    Route::get('/analytics', [AIDashboardController::class, 'dashboard'])
-        ->name('analytics.index');
-
-});
+    Route::middleware(['permission:view analytics'])->group(function () {
+        Route::get('/ai/dashboard', [AIDashboardController::class, 'dashboard']);
+        Route::get('/analytics', [AIDashboardController::class, 'dashboard'])->name('analytics.index');
+    });
 
     Route::middleware(['permission:view profit reports'])->group(function () {
         Route::get('/profit', [ReportController::class, 'index'])->name('profit.index');
-       Route::get('/reports/profit-summary', [ReportController::class, 'getProfitSummary']);
+        Route::get('/reports/profit-summary', [ReportController::class, 'getProfitSummary']);
     });
-    
-
 });
 
 require __DIR__.'/auth.php';
