@@ -237,7 +237,7 @@ const Dashboard = () => {
                     </div>
                 ) : (
                     <div className="text-center py-10">
-                        <p className="text-gray-500 italic">🎉 Your inventory levels are currently healthy.</p>
+                        <p className="text-gray-500 italic"> Your inventory levels are currently healthy.</p>
                     </div>
                 )}
             </div>

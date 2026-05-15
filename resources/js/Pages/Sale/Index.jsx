@@ -184,50 +184,57 @@ export default function Index({ sales }) {
                     </div>
 
                     {/* Pagination */}
-                    {sales.last_page > 1 && (
-                        <div className="mt-6 flex justify-between items-center">
-                            <div className="text-sm text-gray-600">
-                                Page{" "}
-                                <span className="font-medium">
-                                    {sales.current_page}
-                                </span>{" "}
-                                of{" "}
-                                <span className="font-medium">
-                                    {sales.last_page}
-                                </span>
-                            </div>
+                   {/* Pagination */}
+{sales.last_page > 1 && (
+    <div className="mt-6 flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+            Page{" "}
+            <span className="font-medium">
+                {sales.current_page}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium">
+                {sales.last_page}
+            </span>
+        </div>
 
-                            <div className="flex gap-2">
-                                <Link
-                                    href={sales.links.prev || "#"}
-                                    className={`px-4 py-2 border rounded-lg text-sm ${
-                                        !sales.links.prev
-                                            ? "text-gray-400 cursor-not-allowed"
-                                            : "text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                    onClick={(e) =>
-                                        !sales.links.prev && e.preventDefault()
-                                    }
-                                >
-                                    ← Previous
-                                </Link>
+        <div className="flex gap-2">
 
-                                <Link
-                                    href={sales.links.next || "#"}
-                                    className={`px-4 py-2 border rounded-lg text-sm ${
-                                        !sales.links.next
-                                            ? "text-gray-400 cursor-not-allowed"
-                                            : "text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                    onClick={(e) =>
-                                        !sales.links.next && e.preventDefault()
-                                    }
-                                >
-                                    Next →
-                                </Link>
-                            </div>
-                        </div>
-                    )}
+            {/* Previous */}
+            <Link
+                href={sales.prev_page_url || "#"}
+                className={`px-4 py-2 border rounded-lg text-sm ${
+                    !sales.prev_page_url
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-50"
+                }`}
+                onClick={(e) =>
+                    !sales.prev_page_url && e.preventDefault()
+                }
+            >
+                ← Previous
+            </Link>
+
+            {/* Next */}
+            <Link
+                href={sales.next_page_url || "#"}
+                className={`px-4 py-2 border rounded-lg text-sm ${
+                    !sales.next_page_url
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-50"
+                }`}
+                onClick={(e) =>
+                    !sales.next_page_url && e.preventDefault()
+                }
+            >
+                Next →
+            </Link>
+
+        </div>
+    </div>
+)}
+                            
+                       
                 </div>
             </div>
         </div>
