@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AIDashboardController;
 
 use Illuminate\Support\Facades\Auth;
@@ -38,12 +39,12 @@ Route::post('/logout', function () {
 })->name('logout');
 
 // --- Authenticated routes ---
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', \App\Http\Middleware\LogAdminActivity::class])->group(function () {
 
     // ==========================================
     // SHARED ROUTES (Admin & Employee)
     // ==========================================
-    
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Profile routes
@@ -54,7 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Products & Categories (Viewing/Managing as per your requirement)
     Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
     Route::resource('products', ProductController::class)->except(['create', 'edit', 'show']);
-    
+
     // Sales
     Route::resource('sales', SaleController::class);
 
@@ -76,6 +77,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Activity Log
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::delete('/activity-logs', [ActivityLogController::class, 'destroy'])->name('activity-logs.destroy');
 
         // Suppliers - RESTRICTED
         Route::resource('suppliers', SupplierController::class);
