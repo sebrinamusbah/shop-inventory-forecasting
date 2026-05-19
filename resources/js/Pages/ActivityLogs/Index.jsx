@@ -49,6 +49,23 @@ export default function ActivityLogsIndex({ activities }) {
                             <span className="rounded bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-white">
                                 {totalEvents} Events
                             </span>
+                            <div className="ml-4 inline-flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => router.get(route('activity-logs.index'))}
+                                    className="rounded border px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    Mutations
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => router.get(route('activity-logs.index'), { show: 'all' })}
+                                    className="rounded border px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    All
+                                </button>
+                            </div>
                         </div>
 
                         <div className="relative">

@@ -20,14 +20,20 @@ class LogAdminActivity
         }
 
         $routeName = $request->route()->getName();
+        $routePath = $request->route()->uri();
+        $method = strtoupper($request->method());
 
+        // Don't log the destructive clear action or plain GET views by default.
         if ($routeName === 'activity-logs.destroy') {
             return $response;
         }
 
-        $routePath = $request->route()->uri();
-        $method = strtoupper($request->method());
-        $action = $method === 'GET' ? 'Viewed' : $method;
+        // Only record non-GET (mutating) requests by default to avoid noisy "Viewed" entries.
+        if ($method === 'GET') {
+            return $response;
+        }
+
+        $action = $method;
         $label = $routeName
             ? Str::headline(str_replace('.', ' ', $routeName))
             : Str::headline(trim($routePath, '/'));

@@ -4,18 +4,29 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $activities = Activity::query()
-            ->with(['causer'])
-            ->inLog('admin')
-            ->latest()
-            ->paginate(25)
-            ->through(function (Activity $activity) {
+        $query = Activity::query()->with(['causer'])->latest();
+
+        // By default only show entries in the 'admin' log and exclude GET/view events
+        // Use `?show=all` to view across all logs (for debugging).
+        if ($request->query('show') === 'all') {
+            // keep $query as-is (all logs)
+        } else {
+            $query->inLog('admin');
+
+            // try to exclude entries that represent GET/view actions by inspecting JSON properties
+            // works on SQLite/MySQL/Postgres with json_extract/json operators
+            $query->whereRaw("json_extract(properties, '$.method') != 'GET'");
+        }
+
+        $activities = $query->paginate(25)->through(function (Activity $activity) {
                 $properties = $activity->properties?->toArray() ?? [];
 
                 return [
