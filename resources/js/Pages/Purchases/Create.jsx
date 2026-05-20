@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import axios from 'axios';
 
 export default function Create({ auth, categories, suppliers, purchase }) {
     const paymentMethods = [
@@ -13,6 +14,13 @@ export default function Create({ auth, categories, suppliers, purchase }) {
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Modal management and asynchronous suppliers state integration
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [suppliersList, setSuppliersList] = useState(suppliers || []);
+    const [newSupplier, setNewSupplier] = useState({
+        name: '', email: '', phone: '', tin_number: '', account_number: '', address: ''
+    });
 
     const { data, setData, post, processing, errors } = useForm({
         supplier_id: purchase ? purchase.supplier_id : '', 
@@ -95,6 +103,24 @@ export default function Create({ auth, categories, suppliers, purchase }) {
         } else {
             post(action, { ...data, total_cost });
         }
+    };
+
+    const handleQuickSupplierSubmit = (e) => {
+        e.preventDefault();
+        axios.post(route('suppliers.quick-store'), newSupplier)
+            .then(response => {
+                if (response.data.success) {
+                    const createdSupplier = response.data.supplier;
+                    setSuppliersList([...suppliersList, createdSupplier]);
+                    setData('supplier_id', createdSupplier.id);
+                    setNewSupplier({ name: '', email: '', phone: '', tin_number: '', account_number: '', address: '' });
+                    setIsModalOpen(false);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error saving supplier. Please confirm data validity.");
+            });
     };
 
     return (
@@ -217,10 +243,20 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                             {/* Supplier Selector */}
                             <div>
                                 <label className="text-[11px] font-black text-gray-400 uppercase mb-2 block">Vendor / Supplier</label>
-                                <select value={data.supplier_id} onChange={e => setData('supplier_id', e.target.value)} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 h-11" required>
-                                    <option value="" disabled hidden>Select Vendor</option>
-                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
+                                <div className="flex gap-2">
+                                    <select value={data.supplier_id} onChange={e => setData('supplier_id', e.target.value)} className="flex-1 border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 h-11" required>
+                                        <option value="" disabled hidden>Select Vendor</option>
+                                        {suppliersList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl font-bold text-lg h-11 transition-all"
+                                        title="Quick Add Supplier"
+                                    >
+                                        +
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Payment Method Selector */}
@@ -293,6 +329,59 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                     </div>
                 </form>
             </div>
+
+            {/* Quick Add Supplier Modal Overlay */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in dynamic-modal-overlay">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 transform transition-all scale-100">
+                        <div className="flex justify-between items-center mb-4 border-b border-gray-50 pb-3">
+                            <h3 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                                <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm">🤝</span>
+                                Quick Add New Supplier
+                            </h3>
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-sm font-semibold p-1">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleQuickSupplierSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Supplier Name *</label>
+                                <input type="text" required value={newSupplier.name} onChange={e => setNewSupplier({...newSupplier, name: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="Company or Vendor Name"/>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
+                                <input type="email" value={newSupplier.email} onChange={e => setNewSupplier({...newSupplier, email: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="example@domain.com"/>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
+                                    <input type="text" value={newSupplier.phone} onChange={e => setNewSupplier({...newSupplier, phone: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="+251..."/>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">TIN Number</label>
+                                    <input type="text" value={newSupplier.tin_number} onChange={e => setNewSupplier({...newSupplier, tin_number: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="0101..."/>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Account Number</label>
+                                <input type="text" value={newSupplier.account_number} onChange={e => setNewSupplier({...newSupplier, account_number: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="1000...."/>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Office Address</label>
+                                <textarea value={newSupplier.address} onChange={e => setNewSupplier({...newSupplier, address: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5" rows="2" placeholder="Physical location details..."></textarea>
+                            </div>
+                            
+                            <div className="flex justify-end gap-2 pt-3 border-t border-gray-50 mt-4">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-100 transition-all">
+                                    Save Supplier
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }
