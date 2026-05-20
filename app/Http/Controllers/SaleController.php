@@ -114,21 +114,38 @@ public function create()
         return Inertia::render('Sale/Show', ['sale' => $sale]);
     }
 
-    public function destroy(Sale $sale)
-    {
-        try {
-            DB::transaction(function () use ($sale) {
-                foreach ($sale->items as $item) {
-                    $item->product->increment('current_quantity', $item->quantity);
-                }
-                $sale->update(['status' => 'cancelled']);
-            });
-
-            // FIX: Using redirect() instead of Inertia::location to avoid the method error
-            return redirect()->route('sales.index')->with('success', 'Sale cancelled successfully!');
-
-        } catch (\Exception $e) {
-            return back()->withErrors(['general' => 'Failed to delete: ' . $e->getMessage()]);
-        }
+ public function destroy(Sale $sale)
+{
+    if ($sale->status === 'cancelled') {
+        return back()->withErrors([
+            'general' => 'Sale already cancelled.'
+        ]);
     }
+
+    try {
+        DB::transaction(function () use ($sale) {
+
+            foreach ($sale->items as $item) {
+                $item->product->increment(
+                    'current_quantity',
+                    $item->quantity
+                );
+            }
+
+            $sale->update([
+                'status' => 'cancelled'
+            ]);
+        });
+
+        return redirect()
+            ->route('sales.index')
+            ->with('success', 'Sale cancelled successfully!');
+
+    } catch (\Exception $e) {
+
+        return back()->withErrors([
+            'general' => 'Failed to delete: ' . $e->getMessage()
+        ]);
+    }
+}
 }

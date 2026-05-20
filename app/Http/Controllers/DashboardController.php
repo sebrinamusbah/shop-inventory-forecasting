@@ -31,7 +31,9 @@ class DashboardController extends Controller
         // =========================
         // TODAY SALES
         // =========================
-        $todaySales = Sale::whereDate('sale_date', $today)->sum('total_amount');
+        $todaySales = Sale::whereDate('sale_date', $today)
+    ->where('status', 'completed')
+    ->sum('total_amount');
 
         // =========================
         // TOTAL PRODUCTS

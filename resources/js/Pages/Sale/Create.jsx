@@ -303,7 +303,7 @@ export default function Create({ products, categories }) {
                             <option value="cash">Cash</option>
                             <option value="cbe">CBE</option>
                             <option value="telebirr">Telebirr</option>
-                            <option value="bank">Bank</option>
+                            <option value="other_bank">Bank</option>
                         </select>
 
                         <button
