@@ -36,10 +36,29 @@ export default function Create({ auth, categories, suppliers, purchase }) {
         })) : [], 
     });
 
+    // --- Searchable Dropdown States ---
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+    const [categorySearch, setCategorySearch] = useState('');
+
+    const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
+
+    const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
+    const [vendorSearch, setVendorSearch] = useState('');
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsDropdownOpen(false);
+            }
+            // Close searchable options menus on click outside
+            if (!event.target.closest('.category-search-container')) {
+                setIsCategoryDropdownOpen(false);
+            }
+            if (!event.target.closest('.product-search-container')) {
+                setIsProductDropdownOpen(false);
+            }
+            if (!event.target.closest('.vendor-search-container')) {
+                setIsVendorDropdownOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -52,6 +71,14 @@ export default function Create({ auth, categories, suppliers, purchase }) {
     const [availableProducts, setAvailableProducts] = useState([]);
     const [tempItem, setTempItem] = useState({ id: '', name: '', quantity: '', unit_cost: 0, sale_price: 0 });
 
+    // Sync input fields when editing/pre-loading existing purchase details
+    useEffect(() => {
+        if (data.supplier_id && suppliersList.length > 0) {
+            const currentVendor = suppliersList.find(s => s.id == data.supplier_id);
+            if (currentVendor) setVendorSearch(currentVendor.name);
+        }
+    }, [data.supplier_id, suppliersList]);
+
     useEffect(() => {
         if (selectedCategory) {
             fetch(`/purchases/get-products/${selectedCategory}`)
@@ -60,6 +87,8 @@ export default function Create({ auth, categories, suppliers, purchase }) {
         } else {
             setAvailableProducts([]);
         }
+        // Reset product fields on category switch
+        setTempItem({ id: '', name: '', quantity: '', unit_cost: 0, sale_price: 0 });
     }, [selectedCategory]);
 
     const addItem = () => {
@@ -113,6 +142,7 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                     const createdSupplier = response.data.supplier;
                     setSuppliersList([...suppliersList, createdSupplier]);
                     setData('supplier_id', createdSupplier.id);
+                    setVendorSearch(createdSupplier.name);
                     setNewSupplier({ name: '', email: '', phone: '', tin_number: '', account_number: '', address: '' });
                     setIsModalOpen(false);
                 }
@@ -136,33 +166,109 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                             Add Inventory Items
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                            <div className="md:col-span-1">
+                            
+                            {/* 1. Category Search Field */}
+                            <div className="md:col-span-1 relative category-search-container">
                                 <label className="text-[10px] font-black text-gray-400 uppercase mb-2 block">1. Category</label>
-                                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 transition">
-                                    <option value="" disabled hidden>Select</option>
-                                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 transition h-11 pr-8"
+                                        placeholder="Search category..."
+                                        value={categorySearch}
+                                        onChange={(e) => {
+                                            setCategorySearch(e.target.value);
+                                            setIsCategoryDropdownOpen(true);
+                                        }}
+                                        onFocus={() => setIsCategoryDropdownOpen(true)}
+                                    />
+                                    <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 text-[10px] pointer-events-none">▼</span>
+                                </div>
+
+                                {isCategoryDropdownOpen && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                        {categories.filter(cat => 
+                                            cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+                                        ).length > 0 ? (
+                                            categories
+                                                .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                                                .map(cat => (
+                                                    <div
+                                                        key={cat.id}
+                                                        onClick={() => {
+                                                            setSelectedCategory(cat.id);
+                                                            setCategorySearch(cat.name);
+                                                            setIsCategoryDropdownOpen(false);
+                                                        }}
+                                                        className="p-3 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition"
+                                                    >
+                                                        {cat.name}
+                                                    </div>
+                                                ))
+                                        ) : (
+                                            <div className="p-3 text-center text-xs text-gray-400 italic">No categories found</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            <div className="md:col-span-2">
+
+                            {/* 2. Product Search Field */}
+                            <div className="md:col-span-2 relative product-search-container">
                                 <label className="text-[10px] font-black text-gray-400 uppercase mb-2 block">2. Product</label>
-                                <select 
-                                    value={tempItem.id} 
-                                    onChange={e => {
-                                        const p = availableProducts.find(x => x.id == e.target.value);
-                                        if (p) setTempItem({...tempItem, id: p.id, name: p.name, unit_cost: p.unit_buy_price, sale_price: p.unit_sell_price || 0});
-                                    }} 
-                                    className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 transition"
-                                    disabled={!selectedCategory}
-                                >
-                                    <option value="" disabled hidden>Choose product</option>
-                                    {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 transition h-11 pr-8"
+                                        placeholder={selectedCategory ? "Type product name..." : "Choose a category first"}
+                                        disabled={!selectedCategory}
+                                        value={tempItem.name || ''}
+                                        onChange={(e) => {
+                                            setTempItem({ ...tempItem, name: e.target.value, id: '' });
+                                            setIsProductDropdownOpen(true);
+                                        }}
+                                        onFocus={() => selectedCategory && setIsProductDropdownOpen(true)}
+                                    />
+                                    <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 text-[10px] pointer-events-none">▼</span>
+                                </div>
+
+                                {isProductDropdownOpen && selectedCategory && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                        {availableProducts.filter(p => 
+                                            p.name.toLowerCase().includes((tempItem.name || '').toLowerCase())
+                                        ).length > 0 ? (
+                                            availableProducts
+                                                .filter(p => p.name.toLowerCase().includes((tempItem.name || '').toLowerCase()))
+                                                .map(p => (
+                                                    <div
+                                                        key={p.id}
+                                                        onClick={() => {
+                                                            setTempItem({
+                                                                id: p.id,
+                                                                name: p.name,
+                                                                unit_cost: p.unit_buy_price,
+                                                                sale_price: p.unit_sell_price || 0,
+                                                                quantity: tempItem.quantity
+                                                            });
+                                                            setIsProductDropdownOpen(false);
+                                                        }}
+                                                        className="p-3 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition flex justify-between items-center"
+                                                    >
+                                                        <span className="font-semibold">{p.name}</span>
+                                                     
+                                                    </div>
+                                                ))
+                                        ) : (
+                                            <div className="p-3 text-center text-xs text-gray-400 italic">No products found</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
+
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase mb-2 block">Qty</label>
-                                <input type="number" value={tempItem.quantity} onChange={e => setTempItem({...tempItem, quantity: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
+                                <input type="number" value={tempItem.quantity} onChange={e => setTempItem({...tempItem, quantity: e.target.value})} className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 h-11" placeholder="0" />
                             </div>
-                            <button type="button" onClick={addItem} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-blue-100">Add</button>
+                            <button type="button" onClick={addItem} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-blue-100 h-11">Add</button>
                         </div>
                     </div>
 
@@ -233,21 +339,34 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                         )}
                     </div>
 
-                    {/* SECTION 3: Purchase Summary (Scaled and Balanced) */}
+                    {/* SECTION 3: Purchase Summary */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6 border-b border-gray-50 pb-4">
                             Finalize Transaction
                         </h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
-                            {/* Supplier Selector */}
-                            <div>
+                            
+                            {/* 3. Vendor / Supplier Search Field */}
+                            <div className="relative vendor-search-container">
                                 <label className="text-[11px] font-black text-gray-400 uppercase mb-2 block">Vendor / Supplier</label>
                                 <div className="flex gap-2">
-                                    <select value={data.supplier_id} onChange={e => setData('supplier_id', e.target.value)} className="flex-1 border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 h-11" required>
-                                        <option value="" disabled hidden>Select Vendor</option>
-                                        {suppliersList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                    </select>
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            className="w-full border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 h-11 pr-8"
+                                            placeholder="Search Vendor..."
+                                            value={vendorSearch}
+                                            onChange={(e) => {
+                                                setVendorSearch(e.target.value);
+                                                setIsVendorDropdownOpen(true);
+                                                if (e.target.value === '') setData('supplier_id', '');
+                                            }}
+                                            onFocus={() => setIsVendorDropdownOpen(true)}
+                                            required
+                                        />
+                                        <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 text-[10px] pointer-events-none">▼</span>
+                                    </div>
                                     <button 
                                         type="button" 
                                         onClick={() => setIsModalOpen(true)}
@@ -257,6 +376,32 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                                         +
                                     </button>
                                 </div>
+
+                                {isVendorDropdownOpen && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                        {suppliersList.filter(s => 
+                                            s.name.toLowerCase().includes(vendorSearch.toLowerCase())
+                                        ).length > 0 ? (
+                                            suppliersList
+                                                .filter(s => s.name.toLowerCase().includes(vendorSearch.toLowerCase()))
+                                                .map(s => (
+                                                    <div
+                                                        key={s.id}
+                                                        onClick={() => {
+                                                            setData('supplier_id', s.id);
+                                                            setVendorSearch(s.name);
+                                                            setIsVendorDropdownOpen(false);
+                                                        }}
+                                                        className="p-3 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition"
+                                                    >
+                                                        {s.name}
+                                                    </div>
+                                                ))
+                                        ) : (
+                                            <div className="p-3 text-center text-xs text-gray-400 italic">No vendors found</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Payment Method Selector */}
@@ -296,7 +441,7 @@ export default function Create({ auth, categories, suppliers, purchase }) {
                             </div>
 
                             {/* Compact Total and Button Area */}
-                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-center justify-between gap-4">
+                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-center justify-between gap-4 h-11">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-bold text-blue-400 uppercase">Grand Total</span>
                                     <span className="text-xl font-bold text-blue-700">
