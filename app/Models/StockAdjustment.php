@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-    
+use App\Models\Concerns\RecordsActivity;
+
 class StockAdjustment extends Model
 {
- protected $fillable = [
+    use RecordsActivity;
+
+    protected $fillable = [
     'product_id',
     'category_id',
     'type',

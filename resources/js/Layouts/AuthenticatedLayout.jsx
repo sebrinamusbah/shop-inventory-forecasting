@@ -177,6 +177,16 @@ export default function AuthenticatedLayout({ header, children }) {
             href: "/users",
             permission: "manage users",
         },
+        {
+            name: "Activity Logs",
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M9 8h6m3-5H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2z" />
+                </svg>
+            ),
+            href: "/activity-logs",
+            permission: "manage users",
+        },
     ];
 
     const visibleNavigationItems = navigationItems.filter(

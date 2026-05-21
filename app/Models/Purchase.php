@@ -5,19 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Concerns\RecordsActivity;
 
 class Purchase extends Model
 {
+    use RecordsActivity;
+
     protected $fillable = [
-        'user_id', 
-        'supplier_id', 
+        'user_id',
+        'supplier_id',
         'supplier_name',
-        'purchase_date', 
+        'purchase_date',
         'invoice_no',
         'payment_method',
         'due_date',
         'unit_sell_price',
-        'total_cost', 
+        'total_cost',
         'status'
     ];
 
@@ -34,7 +37,7 @@ class Purchase extends Model
     ];
 
     /**
-     * Appends the display info so the frontend can easily access 
+     * Appends the display info so the frontend can easily access
      * the icon and full label.
      */
     protected $appends = ['payment_method_display'];

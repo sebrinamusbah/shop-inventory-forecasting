@@ -1,14 +1,45 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usePage } from "@inertiajs/react";
 import { useMemo } from "react";
-// Import the new icons
-import { 
-    Package, 
-    ShoppingCart, 
-    AlertTriangle, 
-    CreditCard, 
-    TrendingUp 
-} from "lucide-react";
+
+const IconWrapper = ({ children, className = "" }) => (
+    <svg
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+    >
+        {children}
+    </svg>
+);
+
+const PackageIcon = (props) => (
+    <IconWrapper {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </IconWrapper>
+);
+
+const TrendingUpIcon = (props) => (
+    <IconWrapper {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </IconWrapper>
+);
+
+const AlertTriangleIcon = (props) => (
+    <IconWrapper {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01" />
+    </IconWrapper>
+);
+
+const CreditCardIcon = (props) => (
+    <IconWrapper {...props}>
+        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h3" />
+    </IconWrapper>
+);
 
 import {
     LineChart,
@@ -51,7 +82,7 @@ const Dashboard = () => {
 
             {/* KPI GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                
+
                 {/* CARD 1: Total Products */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition duration-200">
                     <div className="flex justify-between items-start">
@@ -62,7 +93,7 @@ const Dashboard = () => {
                             </h2>
                         </div>
                         <div className="p-3 bg-blue-50 rounded-xl">
-                            <Package className="w-6 h-6 text-blue-600" />
+                            <PackageIcon className="w-6 h-6 text-blue-600" />
                         </div>
                     </div>
                     <div className="mt-4 flex items-center text-xs text-gray-400">
@@ -80,7 +111,7 @@ const Dashboard = () => {
                             </h2>
                         </div>
                         <div className="p-3 bg-green-50 rounded-xl">
-                            <TrendingUp className="w-6 h-6 text-green-600" />
+                            <TrendingUpIcon className="w-6 h-6 text-green-600" />
                         </div>
                     </div>
                     <div className="mt-4 flex items-center text-xs text-gray-400">
@@ -98,7 +129,7 @@ const Dashboard = () => {
                             </h2>
                         </div>
                         <div className="p-3 bg-red-50 rounded-xl">
-                            <AlertTriangle className="w-6 h-6 text-red-600" />
+                            <AlertTriangleIcon className="w-6 h-6 text-red-600" />
                         </div>
                     </div>
                     <div className="mt-4 flex items-center text-xs text-gray-400">
@@ -108,15 +139,15 @@ const Dashboard = () => {
 
                 {/* CARD 4: Supplier Credit */}
                 <div className={`rounded-2xl border shadow-sm p-5 transition-all duration-300 hover:shadow-md ${
-                    isOverdue ? 'bg-red-50 border-red-200' : 
+                    isOverdue ? 'bg-red-50 border-red-200' :
                     isToday ? 'bg-orange-50 border-orange-200' :
                     isUrgent ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-100'
                 }`}>
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <p className={`text-sm font-medium ${
-                                isOverdue ? 'text-red-600' : 
-                                isToday ? 'text-orange-600' : 
+                                isOverdue ? 'text-red-600' :
+                                isToday ? 'text-orange-600' :
                                 isUrgent ? 'text-amber-700' : 'text-gray-500'
                             }`}>
                                 Supplier Credit
@@ -126,7 +157,7 @@ const Dashboard = () => {
                             </h2>
                         </div>
                         <div className={`p-3 rounded-xl ${isOverdue ? 'bg-red-100' : isToday ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                            <CreditCard className={`w-6 h-6 ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-600'}`} />
+                            <CreditCardIcon className={`w-6 h-6 ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-600'}`} />
                         </div>
                     </div>
 
@@ -151,15 +182,15 @@ const Dashboard = () => {
                             </span>
                         </div>
                     </div>
-                    
+
                     <div className="mt-3 flex items-center gap-2">
                         <span className={`flex h-2 w-2 rounded-full ${
-                            isOverdue ? 'bg-red-500 animate-pulse' : 
-                            isToday ? 'bg-orange-500' : 
+                            isOverdue ? 'bg-red-500 animate-pulse' :
+                            isToday ? 'bg-orange-500' :
                             isUrgent ? 'bg-amber-500' : 'bg-green-500'
                         }`}></span>
                         <p className={`text-[10px] font-bold uppercase tracking-wider ${
-                            isOverdue ? 'text-red-600' : 
+                            isOverdue ? 'text-red-600' :
                             isToday ? 'text-orange-600' :
                             isUrgent ? 'text-amber-700' : 'text-gray-400'
                         }`}>
