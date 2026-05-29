@@ -1,7 +1,9 @@
+
 from app.ai.core.inventory_context import InventoryContext
 from datetime import date, timedelta, datetime
 import logging
 import pandas as pd
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -215,9 +217,24 @@ class InventoryPipeline:
             if context.alerts_result:
                 self.repo.save_alerts(context.alerts_result)
 
+          
+
+            try:
+                requests.post(
+    "http://127.0.0.1:8000/api/ai-updated",
+    json={
+        "prediction": context.prediction_result,
+        "insight": context.insight_result,
+        "alerts": context.alerts_result
+    },
+    timeout=2
+)
+            except Exception as e:
+                logger.warning(f"Laravel webhook failed: {e}")
+
         except Exception as e:
-             logger.exception("DB save failed")
-             raise
+            logger.exception("DB save failed")
+            raise
 
     # =========================================================
     # DATA CLEANING

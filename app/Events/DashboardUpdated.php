@@ -1,20 +1,35 @@
 <?php
-
-namespace App\Events;
-
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-
 class DashboardUpdated implements ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function broadcastOn(): array
+    public $predictions;
+    public $insights;
+    public $alerts;
+
+    public function __construct($predictions = null, $insights = null, $alerts = null)
+    {
+        $this->predictions = $predictions;
+        $this->insights = $insights;
+        $this->alerts = $alerts;
+    }
+
+    public function broadcastOn()
+    {
+        return new Channel('dashboard');
+    }
+
+    public function broadcastAs()
+    {
+        return 'dashboard.updated';
+    }
+
+    public function broadcastWith()
     {
         return [
-            new Channel('dashboard'),
+            'predictions' => $this->predictions,
+            'insights' => $this->insights,
+            'alerts' => $this->alerts,
         ];
     }
 }

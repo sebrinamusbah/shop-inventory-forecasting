@@ -11,13 +11,13 @@ class AIDashboardController extends Controller
     public function dashboard()
     {
         $predictions = AIPrediction::latest()->get();
-    $insights = AIInsight::latest()->get();
-    $alerts = AIAlert::latest()->get();
+        $insights = AIInsight::latest()->get();
+        $alerts = AIAlert::latest()->get();
 
-    return inertia('Analytics', [
-        'predictions' => $predictions,
-        'insights' => $insights,
-        'alerts' => $alerts,
-    ]);
-}
+        return inertia('Analytics', [
+            'predictions' => $predictions,
+            'insights' => $insights,
+            'alerts' => $alerts,
+        ]);
+    }
 }
