@@ -4,18 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\RecordsActivity;
 
 class Sale extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
-       'user_id', 
+       'user_id',
         'customer_name',
-        'customer_phone', 
-        'total_amount', 
+        'customer_phone',
+        'total_amount',
         'total_profit',
-        'payment_method', 
+        'payment_method',
         'sale_date',
         'status'
     ];

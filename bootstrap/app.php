@@ -3,9 +3,12 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Inertia\Inertia;
 
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
+// Add Spatie's specific exception package here
+use Spatie\Permission\Exceptions\UnauthorizedException; 
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,6 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Configure exception handling if needed
+        // Catch Spatie's Role/Permission unauthorized restrictions
+        $exceptions->render(function (UnauthorizedException $e, $request) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'This action is unauthorized.'], 403);
+            }
+
+            // Force it to load your clean custom component page
+            return Inertia::render('Errors/403')->toResponse($request)->setStatusCode(403);
+        });
     })
     ->create();

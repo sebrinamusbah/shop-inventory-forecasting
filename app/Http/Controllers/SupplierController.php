@@ -99,4 +99,24 @@ class SupplierController extends Controller
 
         return redirect()->route('suppliers.index')->with('success', 'Supplier deleted!');
     }
+
+    public function storeQuick(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'nullable|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'tin_number' => 'nullable|string|max:50',
+        'account_number' => 'nullable|string|max:50',
+        'address' => 'nullable|string',
+    ]);
+
+    $supplier = Supplier::create($validated);
+
+    return response()->json([
+        'success' => true,
+        'supplier' => $supplier
+    ]);
+}
+
 }
