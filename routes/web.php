@@ -20,6 +20,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+
+
 // --- Welcome page (public) ---
 Route::get('/', function () {
     return Inertia::render('Welcome', [

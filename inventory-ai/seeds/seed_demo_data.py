@@ -8,10 +8,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db import Database
 
-db = Database("mysql+pymysql://root:@localhost/small_shop_inventory")
+db = Database("mysql+pymysql://root:@localhost/smallshop")
 
 
-# =========================================
+# ========================================
 # RESET DATABASE
 # =========================================
 def reset_data():

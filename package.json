@@ -25,7 +25,9 @@
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/react": "^2.3.18",
         "axios": "^1.11.0",
+        "laravel-echo": "^2.3.4",
         "lucide-react": "^1.16.0",
+        "pusher-js": "^8.5.0",
         "react-is": "^19.2.5",
         "recharts": "^3.8.1"
     }

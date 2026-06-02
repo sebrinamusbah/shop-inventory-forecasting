@@ -1,4 +1,7 @@
-import React, { useMemo, useState } from "react";
+Analytics.layout = (page) => <AuthenticatedLayout>{page}</AuthenticatedLayout>;
+
+import React, { useMemo, useState, useEffect } from "react";
+import { router } from "@inertiajs/react";
 import AuthenticatedLayout from "../Layouts/AuthenticatedLayout";
 import {
     LineChart,
@@ -21,6 +24,10 @@ export default function Analytics({
     insights = [],
     alerts = [],
 }) {
+    const [livePredictions, setLivePredictions] = useState(predictions);
+    const [liveInsights, setLiveInsights] = useState(insights);
+    const [liveAlerts, setLiveAlerts] = useState(alerts);
+
     const [selectedAlertType, setSelectedAlertType] = useState(null);
 
     // ============================
@@ -36,22 +43,22 @@ export default function Analytics({
     // TOP 10 DEMAND FORECAST
     // ============================
     const topDemandForecast = useMemo(() => {
-        if (!Array.isArray(predictions)) return [];
+        if (!Array.isArray(livePredictions)) return [];
 
-        return [...predictions]
+        return [...livePredictions]
             .sort(
                 (a, b) => (b.predicted_demand || 0) - (a.predicted_demand || 0),
             )
             .slice(0, 10);
-    }, [predictions]);
+    }, [livePredictions]);
 
     // ============================
-    // DEMAND VS STOCK (ONLY OVER/UNDER)
+    // DEMAND VS STOCK
     // ============================
     const stockFilteredData = useMemo(() => {
-        if (!Array.isArray(predictions)) return [];
+        if (!Array.isArray(livePredictions)) return [];
 
-        return predictions
+        return livePredictions
             .map((p) => {
                 const demand = p.predicted_demand || 0;
                 const stock = p.current_quantity || 0;
@@ -69,18 +76,18 @@ export default function Analytics({
                 };
             })
             .filter((p) => p.status !== "BALANCED");
-    }, [predictions]);
+    }, [livePredictions]);
 
     // ============================
-    // RESTOCK PRODUCTS (MERGED SECTION)
+    // RESTOCK PRODUCTS
     // ============================
     const restockProducts = useMemo(() => {
-        if (!Array.isArray(predictions)) return [];
+        if (!Array.isArray(livePredictions)) return [];
 
-        return predictions.filter((p) =>
+        return livePredictions.filter((p) =>
             (p.recommended_action || "").toLowerCase().includes("restock"),
         );
-    }, [predictions]);
+    }, [livePredictions]);
 
     const paginatedRestock = useMemo(() => {
         const start = (restockPage - 1) * restockPerPage;
@@ -92,17 +99,17 @@ export default function Analytics({
     // ============================
     const paginatedInsights = useMemo(() => {
         const start = (insightPage - 1) * insightPerPage;
-        return insights.slice(start, start + insightPerPage);
-    }, [insights, insightPage]);
+        return liveInsights.slice(start, start + insightPerPage);
+    }, [liveInsights, insightPage]);
 
     // ============================
     // ALERT PIE DATA
     // ============================
     const alertPieData = useMemo(() => {
-        if (!Array.isArray(alerts)) return [];
+        if (!Array.isArray(liveAlerts)) return [];
 
         const map = {};
-        alerts.forEach((a) => {
+        liveAlerts.forEach((a) => {
             const type = a?.alert_type || "UNKNOWN";
             map[type] = (map[type] || 0) + 1;
         });
@@ -111,14 +118,43 @@ export default function Analytics({
             name: key,
             value: map[key],
         }));
-    }, [alerts]);
+    }, [liveAlerts]);
 
     const COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6"];
 
     const selectedAlerts = useMemo(() => {
         if (!selectedAlertType) return [];
-        return alerts.filter((a) => a?.alert_type === selectedAlertType);
-    }, [selectedAlertType, alerts]);
+        return liveAlerts.filter((a) => a?.alert_type === selectedAlertType);
+    }, [selectedAlertType, liveAlerts]);
+
+    // ============================
+    // REALTIME ECHO (FIXED)
+    // ============================
+    useEffect(() => {
+        if (!window.Echo) return;
+
+        const channel = window.Echo.channel("dashboard");
+
+        channel.listen(".dashboard.updated", (e) => {
+            console.log("Dashboard realtime update:", e);
+
+            if (e.predictions) {
+                setLivePredictions(e.predictions);
+            }
+
+            if (e.insights) {
+                setLiveInsights(e.insights);
+            }
+
+            if (e.alerts) {
+                setLiveAlerts(e.alerts);
+            }
+        });
+
+        return () => {
+            window.Echo.leaveChannel("dashboard");
+        };
+    }, []);
 
     // ============================
     // TOOLTIP
@@ -143,33 +179,27 @@ export default function Analytics({
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
             <div className="max-w-7xl mx-auto py-10 px-4">
-                {/* HEADER */}
-                <div className="mb-10">
-                    <h1 className="text-4xl font-extrabold text-gray-900">
-                        AI Analytics Dashboard
-                    </h1>
-                    <p className="text-gray-500 mt-2">
-                        Real-time inventory intelligence & forecasting system
-                    </p>
-                </div>
+                {/* EVERYTHING BELOW REMAINS EXACTLY SAME UI */}
+                {/* ONLY DATA BINDING CHANGES ARE LIVE DATA */}
 
                 {/* KPI CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                     {[
                         {
                             label: "Products",
-                            value: predictions.length,
+                            value: livePredictions.length,
                             color: "text-blue-600",
                         },
                         {
                             label: "Alerts",
-                            value: alerts.length,
+                            value: liveAlerts.length,
                             color: "text-red-500",
                         },
                         {
                             label: "Critical Insights",
-                            value: insights.filter((i) => i.severity === "high")
-                                .length,
+                            value: liveInsights.filter(
+                                (i) => i.severity === "high",
+                            ).length,
                             color: "text-purple-600",
                         },
                     ].map((kpi, i) => (
