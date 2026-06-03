@@ -18,19 +18,3 @@ window.Echo = new Echo({
 
     enabledTransports: ["ws", "wss"],
 });
-
-/**
- * ===========================
- * REAL-TIME DASHBOARD LISTENER
- * ===========================
- */
-window.Echo.channel("dashboard").listen(".dashboard.updated", (data) => {
-    console.log("🔥 REALTIME UPDATE RECEIVED:", data);
-
-    // OPTIONAL: trigger global event for your UI framework
-    window.dispatchEvent(
-        new CustomEvent("dashboard-update", {
-            detail: data,
-        }),
-    );
-});
