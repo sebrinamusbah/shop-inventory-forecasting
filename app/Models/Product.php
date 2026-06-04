@@ -19,6 +19,7 @@ class Product extends Model
         'current_quantity',
         'unit_buy_price',
         'unit_sell_price',
+         'tax_rate',
         'min_stock_level',
         'is_active',
     ];

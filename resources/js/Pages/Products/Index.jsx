@@ -1,5 +1,6 @@
 import { useForm, usePage } from "@inertiajs/react";
 import { useState, useEffect } from "react";
+import { Link } from "@inertiajs/react";
 
 export default function Index() {
     // initialProducts comes directly from your Laravel controller
@@ -25,6 +26,7 @@ export default function Index() {
         category_id: "",
         unit_buy_price: "",
         unit_sell_price: "",
+           tax_rate: "",
         current_quantity: "",
         min_stock_level: "",
     });
@@ -32,14 +34,14 @@ export default function Index() {
     // --- 1. THE TABLE STATE ---
     // We only use the data from the database now.
     // This stops "yes water" from appearing if the DB is empty.
-    const [products, setProducts] = useState(initialProducts);
+   const [products, setProducts] = useState(initialProducts.data);
 
     // --- 2. SYNC WITH DATABASE ---
     // When you Add/Delete, Inertia refreshes initialProducts.
     // This effect ensures your table updates instantly.
-    useEffect(() => {
-        setProducts(initialProducts);
-    }, [initialProducts]);
+  useEffect(() => {
+    setProducts(initialProducts.data);
+}, [initialProducts]);
 
     // --- 3. FORM RECOVERY ---
     // This loads your typed text back into the FORM inputs if you refresh,
@@ -83,6 +85,7 @@ export default function Index() {
                     category_id: "",
                     unit_buy_price: "",
                     unit_sell_price: "",
+                     tax_rate: "",
                     current_quantity: "",
                     min_stock_level: "",
                 });
@@ -115,6 +118,7 @@ export default function Index() {
             category_id: product.category_id || "",
             unit_buy_price: product.unit_buy_price,
             unit_sell_price: product.unit_sell_price,
+            tax_rate: product.tax_rate || 0,
             current_quantity: product.current_quantity,
             min_stock_level: product.min_stock_level,
         });
@@ -201,6 +205,15 @@ export default function Index() {
                             className="border rounded-lg p-2"
                         />
                         <input
+                           type="number"
+                           placeholder="Tax Rate (%)"
+                           value={data.tax_rate}
+                           onChange={(e) =>
+                           setData("tax_rate", e.target.value)
+                                             }
+                               className="border rounded-lg p-2"
+                           />
+                        <input
                             type="number"
                             placeholder="Quantity"
                             value={data.current_quantity}
@@ -265,6 +278,7 @@ export default function Index() {
                             <th className="px-4 py-3 text-left">Stock</th>
                             <th className="px-4 py-3 text-left">Buy (ETB)</th>
                             <th className="px-4 py-3 text-left">Sell (ETB)</th>
+                            <th className="px-4 py-3 text-left">Tax (%)</th>
                             {(can("edit products") ||
                                 can("delete products")) && (
                                 <th className="px-4 py-3 text-center">
@@ -308,6 +322,9 @@ export default function Index() {
                                         <td className="px-4 py-3 font-semibold">
                                             {p.unit_sell_price}
                                         </td>
+                                        <td className="px-4 py-3">
+                                             {p.tax_rate ?? 0}%
+                                        </td>
                                         <td className="px-4 py-3 text-center space-x-2">
                                             {can("edit products") && (
                                                 <button
@@ -338,7 +355,7 @@ export default function Index() {
                         ).length === 0 && (
                             <tr>
                                 <td
-                                    colSpan="6"
+                                    colSpan="7"
                                     className="px-4 py-8 text-center text-gray-500"
                                 >
                                     No products found
@@ -347,6 +364,20 @@ export default function Index() {
                         )}
                     </tbody>
                 </table>
+                <div className="flex justify-center mt-4 gap-2">
+                {initialProducts.links.map((link, index) => (
+                 <Link
+                key={index}
+                href={link.url || "#"}
+                 dangerouslySetInnerHTML={{ __html: link.label }}
+                 className={`px-3 py-1 rounded border ${
+                link.active
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700"
+               } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
+                 />
+         ))}
+            </div>
             </div>
         </div>
     );

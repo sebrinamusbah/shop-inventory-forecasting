@@ -11,14 +11,18 @@ use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    public function index()
-    {
-        return Inertia::render('Products/Index', [
-            'products' => Product::with('category')->latest()->get(),
-            'categories' => Category::all(),
-            'totalProducts' => Product::count(),
-        ]);
-    }
+  public function index()
+{
+    return Inertia::render('Products/Index', [
+        'products' => Product::with('category')
+            ->latest()
+            ->paginate(10)
+            ->withQueryString(),
+
+        'categories' => Category::all(),
+        'totalProducts' => Product::count(),
+    ]);
+}
 
     // CREATE PRODUCT (FIXED)
     public function store(Request $request)
@@ -29,8 +33,10 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:categories,id',
             'unit_buy_price' => 'required|numeric|min:0',
             'unit_sell_price' => 'required|numeric|gt:unit_buy_price',
+             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'current_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
+            
         ]);
 
         Product::create($validated);
