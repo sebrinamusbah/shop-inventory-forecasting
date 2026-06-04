@@ -8,12 +8,14 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
-    {
-        return Inertia::render('Categories/Index', [
-            'categories' => Category::latest()->get()
-        ]);
-    }
+   public function index()
+{
+    return Inertia::render('Categories/Index', [
+        'categories' => Category::latest()
+            ->paginate(10)
+            ->withQueryString()
+    ]);
+}
 
     public function store(Request $request)
     {

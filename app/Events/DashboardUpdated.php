@@ -1,4 +1,13 @@
 <?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
 class DashboardUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -14,17 +23,19 @@ class DashboardUpdated implements ShouldBroadcast
         $this->alerts = $alerts;
     }
 
-    public function broadcastOn()
+    public function broadcastOn(): array
     {
-        return new Channel('dashboard');
+        return [
+            new Channel('dashboard'),
+        ];
     }
 
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'dashboard.updated';
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
         return [
             'predictions' => $this->predictions,

@@ -1,5 +1,6 @@
 import { useForm, usePage } from "@inertiajs/react";
 import { useState, useEffect } from "react";
+import { Link } from "@inertiajs/react";
 
 export default function Index() {
     const { categories } = usePage().props;
@@ -147,12 +148,12 @@ export default function Index() {
                                 All Categories
                             </h2>
                             <span className="text-sm text-gray-500">
-                                Total: {categories.length}
+                                Total: {categories.data.length}
                             </span>
                         </div>
                     </div>
 
-                    {categories.length === 0 ? (
+                    {categories.data.length === 0? (
                         <div className="text-center py-12">
                             <svg
                                 className="w-16 h-16 mx-auto text-gray-300 mb-4"
@@ -189,7 +190,7 @@ export default function Index() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {categories.map((c) => (
+                                    {categories.data.map((c) => (
                                         <tr
                                             key={c.id}
                                             className="hover:bg-gray-50 transition-colors"
@@ -247,6 +248,20 @@ export default function Index() {
                                     ))}
                                 </tbody>
                             </table>
+                            <div className="flex justify-center gap-2 p-4">
+                   {categories.links.map((link, index) => (
+                 <Link
+                   key={index}
+                   href={link.url || "#"}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                  className={`px-3 py-1 border rounded ${
+                    link.active
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700"
+                } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
+                 />
+              ))}
+                </div>
                         </div>
                     )}
                 </div>
