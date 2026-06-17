@@ -15,6 +15,12 @@ export default function Index() {
     const [editingId, setEditingId] = useState(null);
     const [categoryList, setCategoryList] = useState(categories);
     const [unitList, setUnitList] = useState(units);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [newCategory, setNewCategory] = useState("");
+
+    const [showUnitModal, setShowUnitModal] = useState(false);
+    const [newUnit, setNewUnit] = useState("");
+    const [newSymbol, setNewSymbol] = useState("");
 
     const can = (permission) => permissions.includes(permission);
 
@@ -30,7 +36,6 @@ export default function Index() {
         name: "",
         sku: "",
         category_id: "",
-
         unit_id: "",
         unit_buy_price: "",
         unit_sell_price: "",
@@ -67,7 +72,7 @@ export default function Index() {
     function submit(e) {
         e.preventDefault();
 
-        if (processing) return; // prevents double submit
+        if (processing) return;
 
         setPriceError("");
 
@@ -84,37 +89,26 @@ export default function Index() {
             return;
         }
 
-        post("/products", {
-            onSuccess: () => {
-                reset();
-                setData({
-                    name: "",
-                    sku: "",
-                    category_id: "",
-                    unit_buy_price: "",
-                    unit_sell_price: "",
-                    tax_rate: "",
-                    current_quantity: "",
-                    min_stock_level: "",
-                });
-                setEditingId(null);
-                setPriceError("");
-            },
-
-            onError: (errors) => {
-                setPriceError(Object.values(errors).flat()[0]);
-                setEditingId(editingId);
-            },
-
-            preserveScroll: true,
-        });
         if (editingId) {
             put(`/products/${editingId}`, {
-                data,
-                preserveState: false,
+                preserveScroll: true,
+                onSuccess: () => {
+                    reset();
+                    setEditingId(null);
+                },
             });
         } else {
-            post("/products", options);
+            post("/products", {
+                preserveScroll: true,
+                onSuccess: () => {
+                    reset();
+                    setEditingId(null);
+                    setPriceError("");
+                },
+                onError: (errors) => {
+                    setPriceError(Object.values(errors).flat()[0]);
+                },
+            });
         }
     }
     function editProduct(product) {
@@ -212,7 +206,7 @@ export default function Index() {
 
                                     const newCat = await res.json();
 
-                                    setCategoryList([...categoryList, newCat]); // 🔥 live update
+                                    setCategoryList([...categoryList, newCat]); // live update
                                     setData("category_id", newCat.id); // auto select
                                 }}
                                 className="bg-green-600 text-white px-3 rounded"
