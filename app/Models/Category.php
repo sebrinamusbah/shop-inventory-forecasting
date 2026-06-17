@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Concerns\RecordsActivity;
+use App\Models\Product;
 
 class Category extends Model
 {
-    use HasFactory, RecordsActivity;
+    use HasFactory, SoftDeletes, RecordsActivity;
 
     protected $fillable = ['name', 'description'];
 

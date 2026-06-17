@@ -9,36 +9,43 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
+use App\Models\Unit;
 
 class ProductController extends Controller
 {
   public function index()
 {
-    return Inertia::render('Products/Index', [
-        'products' => Product::with('category')
-            ->latest()
-            ->paginate(10)
-            ->withQueryString(),
+   return Inertia::render('Products/Index', [
+    'products' => Product::with(['category', 'unit'])
+        ->latest()
+        ->paginate(10)
+        ->withQueryString(),
 
-        'categories' => Category::all(),
-        'totalProducts' => Product::count(),
-    ]);
+    'categories' => Category::all(),
+   'units' => Unit::all(), // IMPORTANT
+    'totalProducts' => Product::count(),
+]);
 }
 
     // CREATE PRODUCT (FIXED)
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string',
-            'sku' => 'required|string|unique:products,sku',
-            'category_id' => 'nullable|exists:categories,id',
-            'unit_buy_price' => 'required|numeric|min:0',
-            'unit_sell_price' => 'required|numeric|gt:unit_buy_price',
-             'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'current_quantity' => 'nullable|integer|min:0',
-            'min_stock_level' => 'nullable|integer|min:0',
+    'name' => 'required|string',
+    'sku' => 'required|string|unique:products,sku',
+
+    'category_id' => 'nullable|exists:categories,id',
+    'unit_id' => 'nullable|exists:units,id',
+
+    'unit_buy_price' => 'required|numeric|min:0',
+    'unit_sell_price' => 'required|numeric|gt:unit_buy_price',
+
+    'tax_rate' => 'nullable|numeric|min:0|max:100',
+    'current_quantity' => 'nullable|integer|min:0',
+    'min_stock_level' => 'nullable|integer|min:0',
+]);
             
-        ]);
+      
 
         Product::create($validated);
 
@@ -48,19 +55,24 @@ class ProductController extends Controller
     //  UPDATE PRODUCT
     public function update(Request $request, Product $product)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'sku' => [
-                'required',
-                'string',
-                Rule::unique('products', 'sku')->ignore($product->id),
-            ],
-            'category_id' => 'nullable|exists:categories,id',
-            'unit_buy_price' => 'required|numeric|min:0',
-            'unit_sell_price' => 'required|numeric|gt:unit_buy_price',
-            'current_quantity' => 'nullable|integer|min:0',
-            'min_stock_level' => 'nullable|integer|min:0',
-        ]);
+      $validated = $request->validate([
+    'name' => 'required|string',
+    'sku' => [
+        'required',
+        'string',
+        Rule::unique('products', 'sku')->ignore($product->id),
+    ],
+
+    'category_id' => 'nullable|exists:categories,id',
+    'unit_id' => 'nullable|exists:units,id',
+
+    'unit_buy_price' => 'required|numeric|min:0',
+    'unit_sell_price' => 'required|numeric|gt:unit_buy_price',
+
+    'current_quantity' => 'nullable|integer|min:0',
+    'min_stock_level' => 'nullable|integer|min:0',
+    'tax_rate' => 'nullable|numeric|min:0|max:100',
+]);
 
         $product->update($validated);
 
@@ -71,7 +83,12 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         // eager load category and related purchase data (supplier + user)
-        $product->load(['category', 'purchaseItems.purchase.supplier', 'purchaseItems.purchase.user']);
+      $product->load([
+    'category',
+    'unit',
+    'purchaseItems.purchase.supplier',
+    'purchaseItems.purchase.user'
+]);
 
         // build a simplified purchases list related to this product
         $purchases = $product->purchaseItems->map(function ($item) {
@@ -94,7 +111,7 @@ class ProductController extends Controller
                     'name' => $purchase->user->name,
                 ] : null,
             ];
-        })->filter()->values();
+       })->filter(fn($item) => $item !== null)->values();
 
         // try to resolve who created the product using activity log (Spatie)
         $activity = Activity::where('subject_type', Product::class)
