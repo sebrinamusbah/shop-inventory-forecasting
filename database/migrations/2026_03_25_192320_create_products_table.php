@@ -11,17 +11,18 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
 
+             // unit relation
+          $table->foreignId('unit_id')
+    ->nullable()
+    ->constrained('units')
+    ->nullOnDelete();
+
             // Category relation
             $table->foreignId('category_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-
-                 // unit relation
-           $table->foreignId('unit_id')
-        ->nullable()
-        ->constrained()
-        ->nullOnDelete();
+    ->nullable()
+    ->constrained('categories')
+    ->nullOnDelete();
+                
 
             // Product identity
             $table->string('name');
