@@ -7,18 +7,15 @@ use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|unique:units,name',
-            'symbol' => 'nullable|string|max:10',
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|unique:units,name',
+        'symbol' => 'nullable|string|max:10',
+    ]);
 
-        $unit = Unit::create([
-            'name' => $request->name,
-            'symbol' => $request->symbol,
-        ]);
+    $unit = Unit::create($validated);
 
-        return response()->json($unit, 201);
-    }
+    return response()->json($unit, 201);
+}
 }

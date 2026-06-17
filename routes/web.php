@@ -14,6 +14,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AIDashboardController;
+use App\Http\Controllers\UnitController;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Application;
@@ -40,6 +41,7 @@ Route::post('/logout', function () {
     return redirect('/');
 })->name('logout');
 
+Route::post('/units', [UnitController::class, 'store']);
 // --- Authenticated routes ---
 Route::middleware(['auth', 'verified', \App\Http\Middleware\LogAdminActivity::class])->group(function () {
 

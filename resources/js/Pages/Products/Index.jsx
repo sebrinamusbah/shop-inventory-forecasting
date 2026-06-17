@@ -31,6 +31,7 @@ export default function Index() {
         put,
         delete: destroy,
         reset,
+        errors,
         processing,
     } = useForm({
         name: "",
@@ -95,6 +96,7 @@ export default function Index() {
                 onSuccess: () => {
                     reset();
                     setEditingId(null);
+                    setPriceError("");
                 },
             });
         } else {
@@ -118,6 +120,7 @@ export default function Index() {
             name: product.name,
             sku: product.sku,
             category_id: product.category_id || "",
+            unit_id: product.unit_id || "",
             unit_buy_price: product.unit_buy_price,
             unit_sell_price: product.unit_sell_price,
             tax_rate: product.tax_rate || 0,
@@ -168,7 +171,7 @@ export default function Index() {
                             value={data.sku}
                             onChange={(e) => {
                                 setData("sku", e.target.value);
-                                setPriceError(""); // clears old "SKU taken" instantly
+                                setPriceError("");
                             }}
                             className="border rounded-lg p-2"
                         />
@@ -181,6 +184,7 @@ export default function Index() {
                                 className="border rounded-lg p-2 w-full"
                             >
                                 <option value="">Select Category</option>
+
                                 {categoryList.map((cat) => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name}
@@ -190,25 +194,7 @@ export default function Index() {
 
                             <button
                                 type="button"
-                                onClick={async () => {
-                                    const name = prompt(
-                                        "Enter new category name",
-                                    );
-                                    if (!name) return;
-
-                                    const res = await fetch("/categories", {
-                                        method: "POST",
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify({ name }),
-                                    });
-
-                                    const newCat = await res.json();
-
-                                    setCategoryList([...categoryList, newCat]); // live update
-                                    setData("category_id", newCat.id); // auto select
-                                }}
+                                onClick={() => setShowCategoryModal(true)}
                                 className="bg-green-600 text-white px-3 rounded"
                             >
                                 +
@@ -261,51 +247,38 @@ export default function Index() {
                             }
                             className="border rounded-lg p-2"
                         />
+                        <div className="flex gap-2">
+                            <select
+                                value={data.unit_id}
+                                onChange={(e) =>
+                                    setData("unit_id", e.target.value)
+                                }
+                                className="border rounded-lg p-2 w-full"
+                            >
+                                <option value="">Select Unit</option>
+
+                                {unitList.map((u) => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.name} ({u.symbol})
+                                    </option>
+                                ))}
+                            </select>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowUnitModal(true)}
+                                className="bg-blue-600 text-white px-3 rounded"
+                            >
+                                +
+                            </button>
+                        </div>
+                        {errors.unit_id && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {errors.unit_id}
+                            </p>
+                        )}
                     </div>
-                    <div className="flex gap-2">
-                        <select
-                            value={data.unit_id}
-                            onChange={(e) => setData("unit_id", e.target.value)}
-                            className="border rounded-lg p-2 w-full"
-                        >
-                            <option value="">Select Unit</option>
-                            {unitList.map((u) => (
-                                <option key={u.id} value={u.id}>
-                                    {u.name} ({u.symbol})
-                                </option>
-                            ))}
-                        </select>
 
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                const name = prompt(
-                                    "Enter unit name (kg, pcs, liter)",
-                                );
-                                const symbol = prompt(
-                                    "Enter symbol (kg, pc, L)",
-                                );
-
-                                if (!name) return;
-
-                                const res = await fetch("/units", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({ name, symbol }),
-                                });
-
-                                const newUnit = await res.json();
-
-                                setUnitList([...unitList, newUnit]); // 🔥 live update
-                                setData("unit_id", newUnit.id);
-                            }}
-                            className="bg-blue-600 text-white px-3 rounded"
-                        >
-                            +
-                        </button>
-                    </div>
                     <div className="mt-4 flex justify-end gap-2">
                         {editingId && (
                             <button
@@ -383,7 +356,8 @@ export default function Index() {
                                             {p.category?.name || "-"}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {p.current_quantity}
+                                            {p.current_quantity}{" "}
+                                            {p.unit?.symbol}
                                             {lowStock && (
                                                 <span className="ml-2 text-xs text-red-600">
                                                     ⚠ Low
@@ -462,6 +436,139 @@ export default function Index() {
                     ))}
                 </div>
             </div>
+            {showCategoryModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg w-96">
+                        <h2 className="text-lg font-bold mb-4">Add Category</h2>
+
+                        <input
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value)}
+                            placeholder="Category name"
+                            className="border p-2 rounded w-full mb-4"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowCategoryModal(false)}
+                                className="px-4 py-2 bg-gray-500 text-white rounded"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    const res = await fetch("/categories", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                            name: newCategory,
+                                        }),
+                                    });
+
+                                    const category = await res.json();
+
+                                    setCategoryList([
+                                        ...categoryList,
+                                        category,
+                                    ]);
+                                    setData("category_id", category.id);
+
+                                    setNewCategory("");
+                                    setShowCategoryModal(false);
+                                }}
+                                className="px-4 py-2 bg-green-600 text-white rounded"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showUnitModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg w-96">
+                        <h2 className="text-lg font-bold mb-4">Add Unit</h2>
+
+                        <input
+                            value={newUnit}
+                            onChange={(e) => setNewUnit(e.target.value)}
+                            placeholder="Unit name"
+                            className="border p-2 rounded w-full mb-3"
+                        />
+                        {errors.name && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {errors.name}
+                            </p>
+                        )}
+
+                        <input
+                            value={newSymbol}
+                            onChange={(e) => setNewSymbol(e.target.value)}
+                            placeholder="Symbol"
+                            className="border p-2 rounded w-full mb-4"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowUnitModal(false)}
+                                className="px-4 py-2 bg-gray-500 text-white rounded"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch("/units", {
+                                            method: "POST",
+                                            headers: {
+                                                "Content-Type":
+                                                    "application/json",
+                                                Accept: "application/json",
+                                                "X-CSRF-TOKEN": document
+                                                    .querySelector(
+                                                        'meta[name="csrf-token"]',
+                                                    )
+                                                    ?.getAttribute("content"),
+                                            },
+                                            body: JSON.stringify({
+                                                name: newUnit,
+                                                symbol: newSymbol,
+                                            }),
+                                        });
+
+                                        console.log("Status:", res.status);
+
+                                        const responseData = await res.json();
+
+                                        console.log("Response:", responseData);
+
+                                        if (!res.ok) return;
+
+                                        setUnitList([
+                                            ...unitList,
+                                            responseData,
+                                        ]);
+                                        setData("unit_id", responseData.id);
+
+                                        setNewUnit("");
+                                        setNewSymbol("");
+                                        setShowUnitModal(false);
+                                    } catch (error) {
+                                        console.error(error);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
