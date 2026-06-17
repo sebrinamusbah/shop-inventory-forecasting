@@ -8,6 +8,7 @@ use App\Models\StockAdjustment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 
 class ProductController extends Controller
 {
@@ -64,6 +65,58 @@ class ProductController extends Controller
         $product->update($validated);
 
         return back();
+    }
+
+    // SHOW PRODUCT DETAIL
+    public function show(Product $product)
+    {
+        // eager load category and related purchase data (supplier + user)
+        $product->load(['category', 'purchaseItems.purchase.supplier', 'purchaseItems.purchase.user']);
+
+        // build a simplified purchases list related to this product
+        $purchases = $product->purchaseItems->map(function ($item) {
+            $purchase = $item->purchase;
+            if (! $purchase) return null;
+
+            return [
+                'id' => $purchase->id,
+                'invoice_no' => $purchase->invoice_no,
+                'supplier' => $purchase->supplier ? [
+                    'id' => $purchase->supplier->id,
+                    'name' => $purchase->supplier->name,
+                ] : null,
+                'purchase_date' => $purchase->purchase_date,
+                'quantity' => $item->quantity,
+                'unit_cost' => $item->unit_cost,
+                'subtotal' => $item->subtotal,
+                'user' => $purchase->user ? [
+                    'id' => $purchase->user->id,
+                    'name' => $purchase->user->name,
+                ] : null,
+            ];
+        })->filter()->values();
+
+        // try to resolve who created the product using activity log (Spatie)
+        $activity = Activity::where('subject_type', Product::class)
+            ->where('subject_id', $product->id)
+            ->orderBy('created_at')
+            ->first();
+
+        $created_by = null;
+        $causer = $activity?->causer;
+        if ($causer) {
+            $created_by = [
+                'id' => $causer->id,
+                'name' => $causer->name,
+                'role' => $causer->getRoleNames()->first() ?? null,
+            ];
+        }
+
+        return Inertia::render('Products/Show', [
+            'product' => $product,
+            'purchases' => $purchases,
+            'created_by' => $created_by,
+        ]);
     }
 
     public function destroy(Product $product)

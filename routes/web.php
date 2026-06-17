@@ -56,7 +56,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\LogAdminActivity::cl
 
     // Products & Categories (Viewing/Managing as per your requirement)
     Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
-    Route::resource('products', ProductController::class)->except(['create', 'edit', 'show']);
+    Route::resource('products', ProductController::class)->except(['create', 'edit']);
 
     // Sales
     Route::resource('sales', SaleController::class);
