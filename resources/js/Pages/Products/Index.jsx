@@ -8,6 +8,8 @@ export default function Index() {
     const permissions = auth?.user?.permissions || [];
     const [search, setSearch] = useState("");
     const [editingId, setEditingId] = useState(null);
+    const [categoryList, setCategoryList] = useState(categories);
+    const [unitList, setUnitList] = useState(units);
 
     const can = (permission) => permissions.includes(permission);
 
@@ -23,9 +25,11 @@ export default function Index() {
         name: "",
         sku: "",
         category_id: "",
+
+        unit_id: "",
         unit_buy_price: "",
         unit_sell_price: "",
-           tax_rate: "",
+        tax_rate: "",
         current_quantity: "",
         min_stock_level: "",
     });
@@ -33,14 +37,14 @@ export default function Index() {
     // --- 1. THE TABLE STATE ---
     // We only use the data from the database now.
     // This stops "yes water" from appearing if the DB is empty.
-   const [products, setProducts] = useState(initialProducts.data);
+    const [products, setProducts] = useState(initialProducts.data);
 
     // --- 2. SYNC WITH DATABASE ---
     // When you Add/Delete, Inertia refreshes initialProducts.
     // This effect ensures your table updates instantly.
-  useEffect(() => {
-    setProducts(initialProducts.data);
-}, [initialProducts]);
+    useEffect(() => {
+        setProducts(initialProducts.data);
+    }, [initialProducts]);
 
     // --- 3. FORM RECOVERY ---
     // This loads your typed text back into the FORM inputs if you refresh,
@@ -84,7 +88,7 @@ export default function Index() {
                     category_id: "",
                     unit_buy_price: "",
                     unit_sell_price: "",
-                     tax_rate: "",
+                    tax_rate: "",
                     current_quantity: "",
                     min_stock_level: "",
                 });
@@ -169,20 +173,48 @@ export default function Index() {
                             }}
                             className="border rounded-lg p-2"
                         />
-                        <select
-                            value={data.category_id}
-                            onChange={(e) =>
-                                setData("category_id", e.target.value)
-                            }
-                            className="border rounded-lg p-2"
-                        >
-                            <option value="">Select Category</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="flex gap-2">
+                            <select
+                                value={data.category_id}
+                                onChange={(e) =>
+                                    setData("category_id", e.target.value)
+                                }
+                                className="border rounded-lg p-2 w-full"
+                            >
+                                <option value="">Select Category</option>
+                                {categoryList.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const name = prompt(
+                                        "Enter new category name",
+                                    );
+                                    if (!name) return;
+
+                                    const res = await fetch("/categories", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ name }),
+                                    });
+
+                                    const newCat = await res.json();
+
+                                    setCategoryList([...categoryList, newCat]); // 🔥 live update
+                                    setData("category_id", newCat.id); // auto select
+                                }}
+                                className="bg-green-600 text-white px-3 rounded"
+                            >
+                                +
+                            </button>
+                        </div>
                         <input
                             type="number"
                             placeholder="Buy Price (ETB)"
@@ -204,14 +236,14 @@ export default function Index() {
                             className="border rounded-lg p-2"
                         />
                         <input
-                           type="number"
-                           placeholder="Tax Rate (%)"
-                           value={data.tax_rate}
-                           onChange={(e) =>
-                           setData("tax_rate", e.target.value)
-                                             }
-                               className="border rounded-lg p-2"
-                           />
+                            type="number"
+                            placeholder="Tax Rate (%)"
+                            value={data.tax_rate}
+                            onChange={(e) =>
+                                setData("tax_rate", e.target.value)
+                            }
+                            className="border rounded-lg p-2"
+                        />
                         <input
                             type="number"
                             placeholder="Quantity"
@@ -230,6 +262,50 @@ export default function Index() {
                             }
                             className="border rounded-lg p-2"
                         />
+                    </div>
+                    <div className="flex gap-2">
+                        <select
+                            value={data.unit_id}
+                            onChange={(e) => setData("unit_id", e.target.value)}
+                            className="border rounded-lg p-2 w-full"
+                        >
+                            <option value="">Select Unit</option>
+                            {unitList.map((u) => (
+                                <option key={u.id} value={u.id}>
+                                    {u.name} ({u.symbol})
+                                </option>
+                            ))}
+                        </select>
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const name = prompt(
+                                    "Enter unit name (kg, pcs, liter)",
+                                );
+                                const symbol = prompt(
+                                    "Enter symbol (kg, pc, L)",
+                                );
+
+                                if (!name) return;
+
+                                const res = await fetch("/units", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ name, symbol }),
+                                });
+
+                                const newUnit = await res.json();
+
+                                setUnitList([...unitList, newUnit]); // 🔥 live update
+                                setData("unit_id", newUnit.id);
+                            }}
+                            className="bg-blue-600 text-white px-3 rounded"
+                        >
+                            +
+                        </button>
                     </div>
                     <div className="mt-4 flex justify-end gap-2">
                         {editingId && (
@@ -322,11 +398,14 @@ export default function Index() {
                                             {p.unit_sell_price}
                                         </td>
                                         <td className="px-4 py-3">
-                                             {p.tax_rate ?? 0}%
+                                            {p.tax_rate ?? 0}%
                                         </td>
                                         <td className="px-4 py-3 text-center space-x-2">
                                             <Link
-                                                href={route("products.show", p.id)}
+                                                href={route(
+                                                    "products.show",
+                                                    p.id,
+                                                )}
                                                 className="text-blue-600 hover:text-blue-800 hover:underline"
                                             >
                                                 View
@@ -370,19 +449,19 @@ export default function Index() {
                     </tbody>
                 </table>
                 <div className="flex justify-center mt-4 gap-2">
-                {initialProducts.links.map((link, index) => (
-                 <Link
-                key={index}
-                href={link.url || "#"}
-                 dangerouslySetInnerHTML={{ __html: link.label }}
-                 className={`px-3 py-1 rounded border ${
-                link.active
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700"
-               } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
-                 />
-         ))}
-            </div>
+                    {initialProducts.links.map((link, index) => (
+                        <Link
+                            key={index}
+                            href={link.url || "#"}
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                            className={`px-3 py-1 rounded border ${
+                                link.active
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-white text-gray-700"
+                            } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );
