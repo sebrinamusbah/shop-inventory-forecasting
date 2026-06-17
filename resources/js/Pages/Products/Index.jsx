@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 export default function Index() {
     // initialProducts comes directly from your Laravel controller
     const [priceError, setPriceError] = useState("");
-    const { products: initialProducts, categories, auth } = usePage().props;
+    const {
+        products: initialProducts,
+        categories,
+        units,
+        auth,
+    } = usePage().props;
     const permissions = auth?.user?.permissions || [];
     const [search, setSearch] = useState("");
     const [editingId, setEditingId] = useState(null);
