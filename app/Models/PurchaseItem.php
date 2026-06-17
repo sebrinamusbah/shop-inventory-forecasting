@@ -20,4 +20,10 @@ class PurchaseItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    // Each purchase item belongs to a purchase
+    public function purchase(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class);
+    }
 }

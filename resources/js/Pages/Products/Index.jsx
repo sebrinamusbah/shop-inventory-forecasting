@@ -1,6 +1,5 @@
-import { useForm, usePage } from "@inertiajs/react";
+import { useForm, usePage, Link } from "@inertiajs/react";
 import { useState, useEffect } from "react";
-import { Link } from "@inertiajs/react";
 
 export default function Index() {
     // initialProducts comes directly from your Laravel controller
@@ -326,6 +325,12 @@ export default function Index() {
                                              {p.tax_rate ?? 0}%
                                         </td>
                                         <td className="px-4 py-3 text-center space-x-2">
+                                            <Link
+                                                href={route("products.show", p.id)}
+                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                            >
+                                                View
+                                            </Link>
                                             {can("edit products") && (
                                                 <button
                                                     onClick={() =>
