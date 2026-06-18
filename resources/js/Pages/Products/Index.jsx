@@ -23,6 +23,7 @@ export default function Index() {
     const [newSymbol, setNewSymbol] = useState("");
     const [unitError, setUnitError] = useState("");
     const [categoryError, setCategoryError] = useState("");
+    const [newDescription, setNewDescription] = useState("");
 
     const can = (permission) => permissions.includes(permission);
 
@@ -197,7 +198,7 @@ export default function Index() {
                             <button
                                 type="button"
                                 onClick={() => setShowCategoryModal(true)}
-                                className="bg-green-600 text-white px-3 rounded"
+                                className="bg-blue-600 text-white px-3 rounded"
                             >
                                 +
                             </button>
@@ -455,6 +456,13 @@ export default function Index() {
                             </p>
                         )}
 
+                        <input
+                            value={newDescription}
+                            onChange={(e) => setNewDescription(e.target.value)}
+                            placeholder="Category description"
+                            className="border p-2 rounded w-full mb-4"
+                        />
+
                         <div className="flex justify-end gap-2">
                             <button
                                 onClick={() => setShowCategoryModal(false)}
@@ -475,6 +483,7 @@ export default function Index() {
                                         },
                                         body: JSON.stringify({
                                             name: newCategory,
+                                            description: newDescription,
                                         }),
                                     });
 

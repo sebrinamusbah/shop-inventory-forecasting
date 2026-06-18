@@ -39,7 +39,9 @@ class CategoryController extends Controller
 
         $category->update([
             'name' => $request->name,
+             'description' => $request->description
         ]);
+
 
         return back();
     }
