@@ -502,7 +502,7 @@ export default function Index() {
                                     //  SUCCESS ONLY
                                     setCategoryList([...categoryList, data]);
                                     setData("category_id", data.id);
-
+                                    setNewDescription("");
                                     setNewCategory("");
                                     setShowCategoryModal(false);
                                 }}
