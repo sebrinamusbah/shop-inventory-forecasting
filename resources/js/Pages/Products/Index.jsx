@@ -22,6 +22,7 @@ export default function Index() {
     const [newUnit, setNewUnit] = useState("");
     const [newSymbol, setNewSymbol] = useState("");
     const [unitError, setUnitError] = useState("");
+    const [categoryError, setCategoryError] = useState("");
 
     const can = (permission) => permissions.includes(permission);
 
@@ -448,6 +449,11 @@ export default function Index() {
                             placeholder="Category name"
                             className="border p-2 rounded w-full mb-4"
                         />
+                        {categoryError && (
+                            <p className="text-red-500 text-sm mt-2">
+                                {categoryError}
+                            </p>
+                        )}
 
                         <div className="flex justify-end gap-2">
                             <button
@@ -459,23 +465,34 @@ export default function Index() {
 
                             <button
                                 onClick={async () => {
+                                    setCategoryError("");
+
                                     const res = await fetch("/categories", {
                                         method: "POST",
                                         headers: {
                                             "Content-Type": "application/json",
+                                            Accept: "application/json",
                                         },
                                         body: JSON.stringify({
                                             name: newCategory,
                                         }),
                                     });
 
-                                    const category = await res.json();
+                                    const data = await res.json();
 
-                                    setCategoryList([
-                                        ...categoryList,
-                                        category,
-                                    ]);
-                                    setData("category_id", category.id);
+                                    // HANDLE ERROR FIRST
+                                    if (!res.ok) {
+                                        setCategoryError(
+                                            data?.errors?.name?.[0] ||
+                                                data.message ||
+                                                "Something went wrong",
+                                        );
+                                        return;
+                                    }
+
+                                    //  SUCCESS ONLY
+                                    setCategoryList([...categoryList, data]);
+                                    setData("category_id", data.id);
 
                                     setNewCategory("");
                                     setShowCategoryModal(false);
