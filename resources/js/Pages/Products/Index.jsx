@@ -21,6 +21,7 @@ export default function Index() {
     const [showUnitModal, setShowUnitModal] = useState(false);
     const [newUnit, setNewUnit] = useState("");
     const [newSymbol, setNewSymbol] = useState("");
+    const [unitError, setUnitError] = useState("");
 
     const can = (permission) => permissions.includes(permission);
 
@@ -498,9 +499,9 @@ export default function Index() {
                             placeholder="Unit name"
                             className="border p-2 rounded w-full mb-3"
                         />
-                        {errors.name && (
-                            <p className="text-red-500 text-sm mt-1">
-                                {errors.name}
+                        {unitError && (
+                            <p className="text-red-500 text-sm mb-3">
+                                {unitError}
                             </p>
                         )}
 
@@ -546,7 +547,15 @@ export default function Index() {
 
                                         console.log("Response:", responseData);
 
-                                        if (!res.ok) return;
+                                        if (!res.ok) {
+                                            setUnitError(
+                                                responseData.errors
+                                                    ?.name?.[0] ||
+                                                    responseData.message ||
+                                                    "Failed to save unit",
+                                            );
+                                            return;
+                                        }
 
                                         setUnitList([
                                             ...unitList,
@@ -554,6 +563,7 @@ export default function Index() {
                                         ]);
                                         setData("unit_id", responseData.id);
 
+                                        setUnitError("");
                                         setNewUnit("");
                                         setNewSymbol("");
                                         setShowUnitModal(false);
