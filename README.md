@@ -138,7 +138,9 @@ cd python-ai
 pip install -r requirements.txt
 python app.py
 
-## API Communication
+
+
+### API Communication
 
 Laravel communicates with Python AI engine via REST API:
 
