@@ -103,45 +103,6 @@ Python AI Engine (Forecasting + Decision System)
 
 ---
 
-## 📦 Installation
-
-### 1. Clone repository
-```bash
-git clone https://github.com/yourusername/shop-inventory-forecasting.git
-cd shop-inventory-forecasting
----
-
-
-### 2. Install Laravel dependencies
-```bash
-composer install
-
-3. Install frontend dependencies
-npm install
-npm run dev
-
- 4. Environment setup
-cp .env.example .env
-php artisan key:generate
-
- 5. Database setup
-php artisan migrate
-php artisan db:seed
-
-6. Run backend server
-php artisan serve
-
-🤖 AI Engine Setup
-
-The AI engine runs separately using Python.
-
-cd python-ai
-pip install -r requirements.txt
-python app.py
----
-
-
-
 ### API Communication
 
 Laravel communicates with Python AI engine via REST API:
@@ -168,3 +129,44 @@ This project is for educational and portfolio purposes.
 
 Sebrina musbah
 ---
+
+
+## 📦 Installation
+
+### 1. Clone repository
+```bash
+git clone https://github.com/yourusername/shop-inventory-forecasting.git
+cd shop-inventory-forecasting
+---
+
+
+2. Install Laravel dependencies
+```bash
+composer install
+
+3. Install frontend dependencies
+npm install
+npm run dev
+
+4. Environment setup
+cp .env.example .env
+php artisan key:generate
+
+5. Database setup
+php artisan migrate
+php artisan db:seed
+
+6. Run backend server
+php artisan serve
+
+🤖 AI Engine Setup
+
+The AI engine runs separately using Python.
+
+cd python-ai
+pip install -r requirements.txt
+python app.py
+---
+
+
+
