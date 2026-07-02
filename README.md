@@ -115,11 +115,11 @@ cd shop-inventory-forecasting
 ```bash
 composer install
 
-### 3. Install frontend dependencies
+3. Install frontend dependencies
 npm install
 npm run dev
 
-### 4. Environment setup
+ 4. Environment setup
 cp .env.example .env
 php artisan key:generate
 
