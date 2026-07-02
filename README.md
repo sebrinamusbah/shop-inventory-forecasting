@@ -109,6 +109,7 @@ Python AI Engine (Forecasting + Decision System)
 ```bash
 git clone https://github.com/yourusername/shop-inventory-forecasting.git
 cd shop-inventory-forecasting
+---
 
 
 ### 2. Install Laravel dependencies
