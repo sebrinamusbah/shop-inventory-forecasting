@@ -148,12 +148,10 @@ sebrina musbah
 git clone https://github.com/yourusername/shop-inventory-forecasting.git
 cd shop-inventory-forecasting
 
----
-
-### 2. Install Laravel dependencies
+2. Install Laravel dependencies
 ```bash
 composer install
----
+
 
 3. Install frontend dependencies
 npm install
