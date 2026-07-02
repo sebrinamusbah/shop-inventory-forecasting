@@ -123,20 +123,21 @@ npm run dev
 cp .env.example .env
 php artisan key:generate
 
-### 5. Database setup
+ 5. Database setup
 php artisan migrate
 php artisan db:seed
 
-### 6. Run backend server
+6. Run backend server
 php artisan serve
 
-## 🤖 AI Engine Setup
+🤖 AI Engine Setup
 
 The AI engine runs separately using Python.
 
 cd python-ai
 pip install -r requirements.txt
 python app.py
+---
 
 
 
