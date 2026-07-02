@@ -109,3 +109,58 @@ Python AI Engine (Forecasting + Decision System)
 ```bash
 git clone https://github.com/yourusername/shop-inventory-forecasting.git
 cd shop-inventory-forecasting
+
+
+### 2. Install Laravel dependencies
+```bash
+composer install
+
+### 3. Install frontend dependencies
+npm install
+npm run dev
+
+### 4. Environment setup
+cp .env.example .env
+php artisan key:generate
+
+### 5. Database setup
+php artisan migrate
+php artisan db:seed
+
+### 6. Run backend server
+php artisan serve
+
+## 🤖 AI Engine Setup
+
+The AI engine runs separately using Python.
+
+cd python-ai
+pip install -r requirements.txt
+python app.py
+
+## API Communication
+
+Laravel communicates with Python AI engine via REST API:
+
+Input: sales + inventory data
+Output: forecast, decision, alerts, risk analysis
+
+📸 Screenshots
+
+(Add your dashboard screenshots here)
+
+## 🎯 Project Goals
+Improve inventory efficiency
+Reduce stock wastage
+Increase profit prediction accuracy
+Provide AI-driven business decisions
+
+
+## 📄 License
+
+This project is for educational and portfolio purposes.
+
+## 👨‍💻 Author
+
+Sebrina musbah
+---
