@@ -110,24 +110,24 @@ Laravel communicates with Python AI engine via REST API:
 Input: sales + inventory data
 Output: forecast, decision, alerts, risk analysis
 
-📸 Screenshots
+### 📸 Screenshots
 
 (Add your dashboard screenshots here)
 
-## 🎯 Project Goals
+### 🎯 Project Goals
 Improve inventory efficiency
 Reduce stock wastage
 Increase profit prediction accuracy
 Provide AI-driven business decisions
 
 
-## 📄 License
+### ## 📄 License
 
 This project is for educational and portfolio purposes.
 
-## 👨‍💻 Author
+###  👨‍💻 Author
 
-Sebrina musbah
+sebrina musbah
 ---
 
 
