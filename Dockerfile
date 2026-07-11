@@ -13,9 +13,12 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 
-RUN npm install && npm run build
+RUN npm install
+RUN npm run build
 
 RUN chmod -R 775 storage bootstrap/cache
+
+RUN php artisan optimize:clear
 
 EXPOSE 10000
 
