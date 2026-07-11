@@ -18,7 +18,7 @@ createInertiaApp({
             `./Pages/${name}.jsx`,
             import.meta.glob("./Pages/**/*.jsx"),
         ).then((page) => {
-            // ✅ Only apply layout to protected pages
+            // Only apply layout to protected pages
             const protectedPages = [
                 "Dashboard",
                 "Products/Index",
