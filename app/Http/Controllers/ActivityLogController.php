@@ -19,12 +19,18 @@ class ActivityLogController extends Controller
         if ($request->query('show') === 'all') {
             // keep $query as-is (all logs)
         } else {
-            $query->inLog('admin');
+    $query->inLog('admin');
 
-            // try to exclude entries that represent GET/view actions by inspecting JSON properties
-            // works on SQLite/MySQL/Postgres with json_extract/json operators
-            $query->whereRaw("json_extract(properties, '$.method') != 'GET'");
-        }
+    // Support PostgreSQL (Neon) and MySQL
+   if (DB::connection()->getDriverName() === 'pgsql') {
+    $query->where(function ($q) {
+        $q->whereNull('properties->>method')
+          ->orWhereRaw("properties->>'method' != ?", ['GET']);
+    });
+} else {
+    $query->whereRaw("json_extract(properties, '$.method') != ?", ['GET']);
+}
+}
 
         $activities = $query->paginate(25)->through(function (Activity $activity) {
                 $properties = $activity->properties?->toArray() ?? [];

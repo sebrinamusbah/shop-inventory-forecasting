@@ -23,12 +23,14 @@ ENV VITE_REVERB_HOST=$VITE_REVERB_HOST
 ENV VITE_REVERB_PORT=$VITE_REVERB_PORT
 ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 
+
 RUN npm install && npm run build
 
 RUN chmod -R 775 storage bootstrap/cache
 
 
-
 EXPOSE 10000
 
-CMD php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan optimize:clear && \
+    php artisan config:cache && \
+    php artisan serve --host=0.0.0.0 --port=10000
