@@ -1,0 +1,35 @@
+name: AI Inventory Forecast
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: inventory-ai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run AI Engine
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          APP_MODE: production
+        run: |
+          python main.py
