@@ -148,6 +148,41 @@ class InventoryScheduler:
         )
 
         self.logger.info(f" Daily job registered at {run_hour}:00")
+        
+        
+        
+            # =========================================================
+    # RUN ONCE (FOR GITHUB ACTIONS)
+    # =========================================================
+    def run_once(self):
+
+        self.logger.info(" Starting one-time AI forecast...")
+
+        if self.pipeline is None:
+            raise ValueError("Pipeline is not initialized.")
+
+        product_ids = self.db.get_all_product_ids() or []
+
+        if not product_ids:
+            self.logger.warning("No products found.")
+            return
+
+        for pid in product_ids:
+
+            result = self.pipeline.run(pid)
+
+            if not result:
+                continue
+
+            action = result.get("prediction_result", {}).get(
+                "recommended_action"
+            )
+
+            self.logger.info(f"Product {pid} → {action}")
+
+        self.run_daily_snapshot()
+
+        self.logger.info("One-time AI forecast completed.")
 
     # =========================================================
     # START / STOP (FIXED SAFE)

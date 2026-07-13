@@ -4,8 +4,10 @@ from datetime import date, timedelta, datetime
 import logging
 import pandas as pd
 import requests
+import os
 
 logger = logging.getLogger(__name__)
+LARAVEL_URL = os.getenv("LARAVEL_URL")
 
 
 class InventoryPipeline:
@@ -221,13 +223,13 @@ class InventoryPipeline:
 
             try:
                 requests.post(
-    "http://127.0.0.1:8000/api/ai-updated",
+    f"{LARAVEL_URL}/api/ai-updated",
     json={
         "prediction": context.prediction_result,
         "insight": context.insight_result,
-        "alerts": context.alerts_result
+        "alerts": context.alerts_result,
     },
-    timeout=2
+    timeout=5,
 )
             except Exception as e:
                 logger.warning(f"Laravel webhook failed: {e}")
