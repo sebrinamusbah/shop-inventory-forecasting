@@ -191,8 +191,8 @@ def seed_products():
                     :buy,
                     :sell,
                     :min,
-                    1,
-                    0,
+                   TRUE,
+                      0,
                     NULL,
                     :now,
                     :now
@@ -303,12 +303,13 @@ def seed_sales(days=60):
                         :now,
                         :now
                     )
+                    RETURNING id
                 """), {
                     "name": f"Customer{random.randint(100,999)}",
                     "phone": f"0911{random.randint(100000,999999)}",
                     "date": day,
                     "now": day
-                }).lastrowid
+             }).scalar()
 
                 total = 0
                 profit = 0
