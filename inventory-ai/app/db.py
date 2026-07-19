@@ -93,8 +93,10 @@ class Database:
     # ALL PRODUCT IDS
     # =========================================================
     def get_all_product_ids(self):
-        rows = self.fetch_all("SELECT id FROM products WHERE is_active = 1")
-        return [r["id"] for r in rows] if rows else []
+     rows = self.fetch_all(
+        "SELECT id FROM products WHERE is_active = TRUE"
+    )
+     return [r["id"] for r in rows] if rows else []
 
     # =========================================================
     # SALES HISTORY
@@ -142,13 +144,13 @@ class Database:
     # PRODUCTS LIST
     # =========================================================
     def get_products(self):
-        rows = self.fetch_all("""
-            SELECT id, name, current_quantity
-            FROM products
-            WHERE is_active = 1
-        """)
-        return pd.DataFrame(rows)
-
+     rows = self.fetch_all("""
+        SELECT id, name, current_quantity
+        FROM products
+        WHERE is_active = TRUE
+    """)
+     return pd.DataFrame(rows)
+ 
     # =========================================================
     # KPI: SALES
     # =========================================================
