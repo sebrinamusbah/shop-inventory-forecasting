@@ -21,48 +21,50 @@ class AIRepository:
         try:
             query = """
             INSERT INTO ai_predictions
-            (
-                product_id,
-                product_name,
-                predicted_demand,
-                current_quantity,
-                confidence_score,
-                trend,
-                recommended_action,
-                risk_score,
-                forecast_start,
-                forecast_end,
-                created_at,
-                updated_at
-            )
-            VALUES
-            (
-                :product_id,
-                :product_name,
-                :predicted_demand,
-                :current_quantity,
-                :confidence_score,
-                :trend,
-                :recommended_action,
-                :risk_score,
-                :forecast_start,
-                :forecast_end,
-                :created_at,
-                :updated_at
-            )
+(
+    product_id,
+    product_name,
+    predicted_demand,
+    current_quantity,
+    confidence_score,
+    trend,
+    recommended_action,
+    risk_score,
+    forecast_start,
+    forecast_end,
+    created_at,
+    updated_at
+)
+VALUES
+(
+    :product_id,
+    :product_name,
+    :predicted_demand,
+    :current_quantity,
+    :confidence_score,
+    :trend,
+    :recommended_action,
+    :risk_score,
+    :forecast_start,
+    :forecast_end,
+    :created_at,
+    :updated_at
+)
 
-            ON DUPLICATE KEY UPDATE
+ON CONFLICT (product_id)
 
-                product_name = VALUES(product_name),
-                predicted_demand = VALUES(predicted_demand),
-                current_quantity = VALUES(current_quantity),
-                confidence_score = VALUES(confidence_score),
-                trend = VALUES(trend),
-                recommended_action = VALUES(recommended_action),
-                risk_score = VALUES(risk_score),
-                forecast_start = VALUES(forecast_start),
-                forecast_end = VALUES(forecast_end),
-                updated_at = VALUES(updated_at)
+DO UPDATE SET
+
+product_name = EXCLUDED.product_name,
+predicted_demand = EXCLUDED.predicted_demand,
+current_quantity = EXCLUDED.current_quantity,
+confidence_score = EXCLUDED.confidence_score,
+trend = EXCLUDED.trend,
+recommended_action = EXCLUDED.recommended_action,
+risk_score = EXCLUDED.risk_score,
+forecast_start = EXCLUDED.forecast_start,
+forecast_end = EXCLUDED.forecast_end,
+updated_at = EXCLUDED.updated_at
             """
 
             now = datetime.utcnow()
@@ -124,36 +126,38 @@ class AIRepository:
         try:
             query = """
             INSERT INTO ai_insights
-            (
-                product_id,
-                product_name,
-                message,
-                insight_type,
-                severity,
-                reason_summary,
-                created_at,
-                updated_at
-            )
-            VALUES
-            (
-                :product_id,
-                :product_name,
-                :message,
-                :insight_type,
-                :severity,
-                :reason_summary,
-                :created_at,
-                :updated_at
-            )
+(
+    product_id,
+    product_name,
+    message,
+    insight_type,
+    severity,
+    reason_summary,
+    created_at,
+    updated_at
+)
+VALUES
+(
+    :product_id,
+    :product_name,
+    :message,
+    :insight_type,
+    :severity,
+    :reason_summary,
+    :created_at,
+    :updated_at
+)
 
-            ON DUPLICATE KEY UPDATE
+ON CONFLICT (product_id)
 
-                product_name = VALUES(product_name),
-                message = VALUES(message),
-                insight_type = VALUES(insight_type),
-                severity = VALUES(severity),
-                reason_summary = VALUES(reason_summary),
-                updated_at = VALUES(updated_at)
+DO UPDATE SET
+
+product_name = EXCLUDED.product_name,
+message = EXCLUDED.message,
+insight_type = EXCLUDED.insight_type,
+severity = EXCLUDED.severity,
+reason_summary = EXCLUDED.reason_summary,
+updated_at = EXCLUDED.updated_at
             """
 
             now = datetime.utcnow()
@@ -200,35 +204,37 @@ class AIRepository:
         try:
             query = """
             INSERT INTO ai_alerts
-            (
-                product_id,
-                product_name,
-                alert_type,
-                priority,
-                alert_message,
-                is_resolved,
-                created_at,
-                updated_at
-            )
-            VALUES
-            (
-                :product_id,
-                :product_name,
-                :alert_type,
-                :priority,
-                :alert_message,
-                :is_resolved,
-                :created_at,
-                :updated_at
-            )
+(
+    product_id,
+    product_name,
+    alert_type,
+    priority,
+    alert_message,
+    is_resolved,
+    created_at,
+    updated_at
+)
+VALUES
+(
+    :product_id,
+    :product_name,
+    :alert_type,
+    :priority,
+    :alert_message,
+    :is_resolved,
+    :created_at,
+    :updated_at
+)
 
-            ON DUPLICATE KEY UPDATE
+ON CONFLICT (product_id, alert_type)
 
-                product_name = VALUES(product_name),
-                priority = VALUES(priority),
-                alert_message = VALUES(alert_message),
-                is_resolved = VALUES(is_resolved),
-                updated_at = VALUES(updated_at)
+DO UPDATE SET
+
+product_name = EXCLUDED.product_name,
+priority = EXCLUDED.priority,
+alert_message = EXCLUDED.alert_message,
+is_resolved = EXCLUDED.is_resolved,
+updated_at = EXCLUDED.updated_at
             """
 
             seen = set()
@@ -285,45 +291,47 @@ class AIRepository:
         try:
             query = """
             INSERT INTO ai_snapshots
-            (
-                snapshot_date,
-                total_sales,
-                total_profit,
-                top_product_id,
-                low_stock_count,
-                out_of_stock_count,
-                sales_trend,
-                total_predictions_count,
-                critical_alerts_count,
-                created_at,
-                updated_at
-            )
-            VALUES
-            (
-                :snapshot_date,
-                :total_sales,
-                :total_profit,
-                :top_product_id,
-                :low_stock_count,
-                :out_of_stock_count,
-                :sales_trend,
-                :total_predictions_count,
-                :critical_alerts_count,
-                :created_at,
-                :updated_at
-            )
+(
+    snapshot_date,
+    total_sales,
+    total_profit,
+    top_product_id,
+    low_stock_count,
+    out_of_stock_count,
+    sales_trend,
+    total_predictions_count,
+    critical_alerts_count,
+    created_at,
+    updated_at
+)
+VALUES
+(
+    :snapshot_date,
+    :total_sales,
+    :total_profit,
+    :top_product_id,
+    :low_stock_count,
+    :out_of_stock_count,
+    :sales_trend,
+    :total_predictions_count,
+    :critical_alerts_count,
+    :created_at,
+    :updated_at
+)
 
-            ON DUPLICATE KEY UPDATE
+ON CONFLICT (snapshot_date)
 
-                total_sales = VALUES(total_sales),
-                total_profit = VALUES(total_profit),
-                top_product_id = VALUES(top_product_id),
-                low_stock_count = VALUES(low_stock_count),
-                out_of_stock_count = VALUES(out_of_stock_count),
-                sales_trend = VALUES(sales_trend),
-                total_predictions_count = VALUES(total_predictions_count),
-                critical_alerts_count = VALUES(critical_alerts_count),
-                updated_at = VALUES(updated_at)
+DO UPDATE SET
+
+total_sales = EXCLUDED.total_sales,
+total_profit = EXCLUDED.total_profit,
+top_product_id = EXCLUDED.top_product_id,
+low_stock_count = EXCLUDED.low_stock_count,
+out_of_stock_count = EXCLUDED.out_of_stock_count,
+sales_trend = EXCLUDED.sales_trend,
+total_predictions_count = EXCLUDED.total_predictions_count,
+critical_alerts_count = EXCLUDED.critical_alerts_count,
+updated_at = EXCLUDED.updated_at
             """
 
             now = datetime.utcnow()
