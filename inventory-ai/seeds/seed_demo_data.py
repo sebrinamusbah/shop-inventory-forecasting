@@ -7,8 +7,11 @@ from sqlalchemy import text
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db import Database
+from dotenv import load_dotenv
 
-db = Database("mysql+pymysql://root:@localhost/smallshop")
+load_dotenv()
+
+db = Database(os.getenv("DATABASE_URL"))
 
 
 # ========================================
@@ -18,14 +21,19 @@ def reset_data():
 
     with db.engine.begin() as conn:
 
-        conn.execute(text("SET FOREIGN_KEY_CHECKS=0"))
-
+        # Delete child tables first
         conn.execute(text("DELETE FROM sale_items"))
         conn.execute(text("DELETE FROM sales"))
         conn.execute(text("DELETE FROM products"))
         conn.execute(text("DELETE FROM categories"))
 
-        conn.execute(text("SET FOREIGN_KEY_CHECKS=1"))
+        # Optional: reset PostgreSQL sequences
+        conn.execute(text("""
+            ALTER SEQUENCE categories_id_seq RESTART WITH 1;
+            ALTER SEQUENCE products_id_seq RESTART WITH 1;
+            ALTER SEQUENCE sales_id_seq RESTART WITH 1;
+            ALTER SEQUENCE sale_items_id_seq RESTART WITH 1;
+        """))
 
     print("Database reset complete")
 
