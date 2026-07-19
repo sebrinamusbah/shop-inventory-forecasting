@@ -8,6 +8,7 @@ tqdm>=4.66
 holidays==0.95
 SQLAlchemy>=2.0
 PyMySQL>=1.1
+psycopg2-binary>=2.9.9
 python-dotenv>=1.0
 apscheduler==3.11.2
 tzlocal==5.3.1
