@@ -1,187 +1,487 @@
-# 📦 Shop Inventory & AI Forecasting System
+# 📦 AI-Powered Shop Inventory Forecasting System
 
-## 📌 Overview
-This is a full-stack **Shop Inventory Management and AI Forecasting System** designed to help businesses manage products, sales, purchases, stock, and suppliers while providing intelligent demand forecasting and decision support using a Python AI engine.
+An intelligent inventory management platform that combines traditional inventory operations with Artificial Intelligence to predict product demand, optimize stock levels, identify inventory risks, and provide real-time business insights.
 
-The system combines traditional inventory management with AI-powered analytics to improve stock decisions, reduce waste, and optimize profit.
-
----
-
-## 🚀 Key Features
-
-### 📊 Inventory Management
-- Product management
-- Category management
-- Supplier management
-- Stock tracking and stock adjustments
-
-### 💰 Business Operations
-- Sales management
-- Purchase management
-- Profit calculation dashboard
-- Activity log for tracking system actions
-
-### 📈 Analytics & Insights
-- Sales analytics dashboard
-- Inventory performance metrics
-- Profit and loss insights
-
-### 🤖 AI Forecasting System
-A multi-layer AI engine built in Python with 5 core layers:
-
-- **Forecasting Engine**
-  - Uses Prophet model for demand prediction
-- **Decision Engine**
-  - Suggests optimal stock actions
-- **Risk Engine**
-  - Evaluates inventory and business risks using mathematical models
-- **Alert Engine**
-  - Detects low stock and demand anomalies
-- **Explanation Engine**
-  - Explains AI decisions in human-readable form
-
-
+Built with **Laravel**, **React**, **Python (Prophet)**, **PostgreSQL**, and **Laravel Reverb**.
 
 ---
 
-## 🧠 AI Architecture
-The AI system is designed as a layered pipeline:
+# 📑 Table of Contents
 
-1. Data preprocessing
-2. Forecasting (Prophet model)
-3. Decision-making logic (business rules + mathematical formulation)
-4. Explanation generation
-5. Alert detection system
-6. Risk analysis engine
+- Overview
+- Features
+- System Architecture
+- AI Architecture
+- Technology Stack
+- Core Modules
+- Database Design
+- Installation
+- Running the AI Engine
+- Real-Time Dashboard
+- Deployment
+- Screenshots
+- Future Improvements
+- Author
 
 ---
 
-## 🧱 Tech Stack
+# 🚀 Overview
 
-### Backend
-- Laravel (REST API & business logic)
+Managing inventory efficiently is one of the biggest challenges for retail businesses. Overstocking increases storage costs while understocking results in lost sales.
 
-### Frontend
-- React.js with Inertia.js
+This project addresses these challenges by combining an Inventory Management System with an AI forecasting engine capable of:
 
-### AI Engine
+- Predicting future product demand
+- Recommending inventory actions
+- Detecting inventory risks
+- Generating intelligent business insights
+- Updating analytics dashboards in real time
+
+The AI engine continuously analyzes historical sales data and inventory levels to help businesses make better inventory decisions.
+
+---
+
+# ✨ Features
+
+## 📦 Inventory Management
+
+- Product Management
+- Category Management
+- Supplier Management
+- Purchase Management
+- Sales Management
+- Inventory Tracking
+- Stock Adjustments
+
+---
+
+## 📈 Business Analytics
+
+- Sales Dashboard
+- Profit Analysis
+- Inventory Performance
+- Activity Logs
+- Business KPIs
+
+---
+
+## 🤖 AI Forecasting Engine
+
+The Python AI Engine provides:
+
+- Demand Forecasting
+- Stock Recommendation
+- Inventory Risk Assessment
+- AI Insights
+- Alert Generation
+- Daily Business Snapshot
+
+---
+
+## ⚡ Real-Time Dashboard
+
+The analytics dashboard updates automatically whenever new AI predictions are generated.
+
+Powered by:
+
+- Laravel Events
+- Laravel Reverb
+- Laravel Echo
+- React State Management
+
+No page refresh is required.
+
+---
+
+# 🧠 AI Pipeline
+
+```
+Sales History
+        │
+        ▼
+Data Cleaning
+        │
+        ▼
+Prophet Forecasting
+        │
+        ▼
+Decision Engine
+        │
+        ▼
+Risk Engine
+        │
+        ▼
+Explanation Engine
+        │
+        ▼
+Alert Engine
+        │
+        ▼
+AI Database
+        │
+        ▼
+Laravel Event
+        │
+        ▼
+Reverb WebSocket
+        │
+        ▼
+React Analytics Dashboard
+```
+
+---
+
+# 🏗️ System Architecture
+
+```
+                  React + Inertia.js
+                         │
+                         ▼
+                 Laravel Backend
+                  (Business Logic)
+                  │            │
+                  │            │
+                  ▼            ▼
+           PostgreSQL      Laravel Reverb
+                  ▲            │
+                  │            ▼
+            Python AI Engine ─────► Live Dashboard
+```
+
+---
+
+# 🧩 AI Architecture
+
+The AI Engine consists of multiple independent layers.
+
+### Forecast Engine
+
+- Prophet Time Series Forecasting
+- Demand Prediction
+- Trend Detection
+
+---
+
+### Decision Engine
+
+Determines:
+
+- Restock
+- Hold
+- Reduce Inventory
+
+using business rules and mathematical models.
+
+---
+
+### Risk Engine
+
+Calculates inventory risks including:
+
+- Overstock Risk
+- Understock Risk
+- Demand Spike Risk
+
+---
+
+### Explanation Engine
+
+Generates human-readable explanations for every AI decision.
+
+Example:
+
+> "Predicted demand exceeds available stock. Restocking is recommended."
+
+---
+
+### Alert Engine
+
+Automatically generates alerts such as:
+
+- Low Stock
+- Overstock
+- Demand Spike
+- Restock Required
+
+---
+
+# 💻 Technology Stack
+
+## Backend
+
+- Laravel 12
+- PHP 8.4
+
+## Frontend
+
+- React
+- Inertia.js
+- Tailwind CSS
+- Recharts
+
+## AI Engine
+
 - Python
-- Prophet (time series forecasting)
-- NumPy / Pandas
-- Custom business logic layers
+- Prophet
+- Pandas
+- NumPy
+- SQLAlchemy
 
-### Database
-- MySQL
+## Database
+
+- PostgreSQL
+
+## Real-Time
+
+- Laravel Reverb
+- Laravel Echo
+
+## Deployment
+
+- Docker
+- Render
+- GitHub Actions
 
 ---
 
-## 🗄️ Core Modules
+# 📚 Core Modules
 
+- Dashboard
 - Products
 - Categories
-- Users & Roles
 - Suppliers
 - Purchases
 - Sales
 - Stock Adjustments
 - Activity Logs
-- AI Forecasting Analytics Dashboard
-- Profit Page
-- Dashboard
+- Profit Dashboard
+- AI Analytics Dashboard
+- AI Predictions
+- AI Insights
+- AI Alerts
 
 ---
 
-## ⚙️ System Architecture
+# 🗄️ AI Database Tables
 
-Frontend (React + Inertia)
-        ↓
-Laravel Backend (API + Business Logic)
-        ↓
-MySQL Database
-        ↓
-Python AI Engine (Forecasting + Decision System)
+The AI Engine stores generated results inside dedicated tables.
+
+- ai_predictions
+- ai_insights
+- ai_alerts
+- ai_snapshots
+
+Each prediction updates the existing product record instead of creating duplicates.
 
 ---
 
-## 📦 Installation
+# 📂 Project Structure
 
-### 1. Clone repository
+```
+shop-inventory-forecasting/
+
+├── app/
+├── bootstrap/
+├── config/
+├── database/
+├── inventory-ai/
+├── public/
+├── resources/
+├── routes/
+├── storage/
+├── docs/
+├── Dockerfile
+└── README.md
+```
+
+---
+
+# ⚙️ Installation
+
+## Clone Repository
+
 ```bash
-git clone https://github.com/yourusername/shop-inventory-forecasting.git
+git clone https://github.com/YOUR_USERNAME/shop-inventory-forecasting.git
+
 cd shop-inventory-forecasting
 ```
-### 2. Install Laravel dependencies
+
+---
+
+## Install Laravel
+
 ```bash
 composer install
 ```
-### 3. Install frontend dependencies
+
+---
+
+## Install Frontend
+
 ```bash
 npm install
-npm run dev
+
+npm run build
 ```
 
-### 4. Environment setup
+---
+
+## Configure Environment
+
 ```bash
 cp .env.example .env
+
 php artisan key:generate
 ```
 
-### 5. Database setup
+---
+
+## Database
+
 ```bash
 php artisan migrate
+
 php artisan db:seed
 ```
 
-### 6. Run backend server
+---
+
+## Start Laravel
+
 ```bash
 php artisan serve
 ```
 
-### 🤖 AI Engine Setup
+---
+
+# 🤖 Running the AI Engine
+
+Navigate to the AI project:
+
 ```bash
-The AI engine runs separately using Python.
-
-cd python-ai
-pip install -r requirements.txt
-python app.py
+cd inventory-ai
 ```
-### API Communication
 
-Laravel communicates with Python AI engine via REST API:
+Install dependencies
 
-Input: sales + inventory data
-Output: forecast, decision, alerts, risk analysis
+```bash
+pip install -r requirements.txt
+```
 
----
+Run forecasting
 
+```bash
+python run_forecast.py
+```
 
-### 📸 Screenshots
+The AI Engine will:
 
-(Add your dashboard screenshots here)
-
----
-
-### 🎯 Project Goals
-Improve inventory efficiency
-Reduce stock wastage
-Increase profit prediction accuracy
-Provide AI-driven business decisions
-
----
-
-
-### 📄 License
-
-This project is for educational and portfolio purposes.
+- Read historical sales
+- Forecast demand
+- Generate AI insights
+- Create alerts
+- Save predictions
+- Broadcast updates to Laravel
 
 ---
 
-###  👨‍💻 Author
+# ⚡ Real-Time Updates
 
-sebrina musbah
+Start Laravel Reverb locally:
+
+```bash
+php artisan reverb:start
+```
+
+Whenever the AI Engine finishes forecasting:
+
+```
+Python AI
+      │
+      ▼
+Laravel API
+      │
+      ▼
+DashboardUpdated Event
+      │
+      ▼
+Laravel Reverb
+      │
+      ▼
+React Dashboard
+```
+
+The Analytics page updates instantly without refreshing.
 
 ---
 
+# 🚀 Deployment
 
+The application is deployed using Render.
 
+Services:
 
+- Laravel Web Service
+- Python AI Service
+- PostgreSQL Database
+- Laravel Reverb Service
+
+Each service runs independently while communicating through REST APIs and WebSockets.
+
+---
+
+# 📸 Screenshots
+
+Add screenshots here.
+
+Examples:
+
+- Login Page
+- Dashboard
+- Product Management
+- Sales
+- AI Analytics
+- Demand Forecast
+- AI Alerts
+- Real-Time Dashboard
+
+---
+
+# 🎯 Technical Challenges Solved
+
+- Laravel + Python integration
+- AI demand forecasting using Prophet
+- Inventory decision engine
+- Risk scoring algorithms
+- Real-time dashboard updates
+- WebSocket deployment with Laravel Reverb
+- PostgreSQL optimization
+- Docker deployment
+- GitHub Actions automation
+
+---
+
+# 🔮 Future Improvements
+
+- Multi-store inventory
+- Supplier recommendation engine
+- Automatic purchase order generation
+- AI chatbot assistant
+- Seasonal forecasting
+- Deep learning forecasting models
+- Email and SMS notifications
+- Mobile application
+
+---
+
+# 👨‍💻 Author
+
+**Sebrina Musbah**
+
+Software Engineering student
+
+---
+
+# 📄 License
+
+This project was developed for educational, internship, and portfolio purposes.
