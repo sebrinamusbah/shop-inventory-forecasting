@@ -434,7 +434,7 @@ Each service runs independently while communicating through REST APIs and WebSoc
 
 The landing page introducing the inventory management platform.
 
-![Welcome Page](docs/screenshots/welcome-page.png)
+![Welcome Page](docs/screenshots/Welcome-page.png)
 
 
 ---
