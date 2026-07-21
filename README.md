@@ -504,7 +504,7 @@ AI-powered demand prediction, stock analysis, alerts, and recommendations.
 
 Manage inventory changes and stock corrections.
 
-![stock adjustment](docs/screenshots/stock-adjustment.png)
+![stock adjustment](docs/screenshots/stock adjusment.png)
 
 
 ---
