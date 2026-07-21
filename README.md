@@ -134,6 +134,8 @@ Tracks important system activities for auditing and transparency.
 
 ![Activity Log](docs/screenshots/activity-log.png)
 
+---
+
 # ✨ Features
 
 ## 📦 Inventory Management
