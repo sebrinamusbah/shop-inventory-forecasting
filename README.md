@@ -437,7 +437,7 @@ Each service runs independently while communicating through REST APIs and WebSoc
 
 The landing page introducing the inventory management platform.
 
-![Welcome Page](docs/screenshots/welcome-page.png)
+![Welcome Page](docs/screenshots/welcome page.png)
 
 
 ---
@@ -486,7 +486,7 @@ Track sales transactions, purchases, and business operations.
 
 Monitor revenue, costs, and profitability.
 
-![Profit](docs/screenshots/profit.png)
+![Profit](docs/screenshots/profit report page.png)
 
 
 ---
@@ -504,7 +504,7 @@ AI-powered demand prediction, stock analysis, alerts, and recommendations.
 
 Manage inventory changes and stock corrections.
 
-![Stock Adjustment](docs/screenshots/stock-adjustment.png)
+![stock adjustment](docs/screenshots/stock-adjustment.png)
 
 
 ---
@@ -513,7 +513,7 @@ Manage inventory changes and stock corrections.
 
 Manage system users and access control.
 
-![Users](docs/screenshots/users.png)
+![Users](docs/screenshots/users page.png)
 
 
 ---
@@ -522,7 +522,7 @@ Manage system users and access control.
 
 Tracks important system activities for auditing and transparency.
 
-![Activity Log](docs/screenshots/activity-log.png)
+![Activity Log](docs/screenshots/Activity log.png)
 
 ---
 
