@@ -9,6 +9,7 @@ Built with **Laravel**, **React**, **Python (Prophet)**, **PostgreSQL**, and **L
 # 📑 Table of Contents
 
 - Overview
+- Screenshots
 - Features
 - System Architecture
 - AI Architecture
@@ -19,7 +20,6 @@ Built with **Laravel**, **React**, **Python (Prophet)**, **PostgreSQL**, and **L
 - Running the AI Engine
 - Real-Time Dashboard
 - Deployment
-- Screenshots
 - Future Improvements
 - Author
 
@@ -40,6 +40,99 @@ This project addresses these challenges by combining an Inventory Management Sys
 The AI engine continuously analyzes historical sales data and inventory levels to help businesses make better inventory decisions.
 
 ---
+
+# 📸 System Screenshots
+
+## 🏠 Welcome Page
+
+The landing page introducing the inventory management platform.
+
+![Welcome Page](docs/screenshots/Welcome-page.png)
+
+
+---
+
+## 📊 Dashboard
+
+Main business overview showing inventory statistics, sales performance, and system KPIs.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+
+---
+
+## 📦 Product Management
+
+Manage products, pricing, stock quantity, and product information.
+
+![Products](docs/screenshots/products.png)
+
+
+---
+
+## 🏷️ Category & Supplier Management
+
+Organize products using categories and manage supplier information.
+
+![Categories](docs/screenshots/categories.png)
+
+![Suppliers](docs/screenshots/suppliers.png)
+
+
+---
+
+## 💰 Sales and Purchase Management
+
+Track sales transactions, purchases, and business operations.
+
+![Sales](docs/screenshots/sales.png)
+
+![Purchases](docs/screenshots/purchases.png)
+
+
+---
+
+## 📈 Profit Analytics
+
+Monitor revenue, costs, and profitability.
+
+![Profit](docs/screenshots/profit.png)
+
+
+---
+
+## 🤖 AI Forecasting Analytics Dashboard ⭐
+
+AI-powered demand prediction, stock analysis, alerts, and recommendations.
+
+![AI Analytics](docs/screenshots/analytics-ai.png)
+
+
+---
+
+## 📦 Stock Adjustment
+
+Manage inventory changes and stock corrections.
+
+![Stock Adjustment](docs/screenshots/stock-adjustment.png)
+
+
+---
+
+## 👥 User Management
+
+Manage system users and access control.
+
+![Users](docs/screenshots/users.png)
+
+
+---
+
+## 🔐 Activity Log
+
+Tracks important system activities for auditing and transparency.
+
+![Activity Log](docs/screenshots/activity-log.png)
 
 # ✨ Features
 
@@ -427,99 +520,6 @@ Services:
 - Laravel Reverb Service
 
 Each service runs independently while communicating through REST APIs and WebSockets.
-
-# 📸 System Screenshots
-
-## 🏠 Welcome Page
-
-The landing page introducing the inventory management platform.
-
-![Welcome Page](docs/screenshots/Welcome-page.png)
-
-
----
-
-## 📊 Dashboard
-
-Main business overview showing inventory statistics, sales performance, and system KPIs.
-
-![Dashboard](docs/screenshots/dashboard.png)
-
-
----
-
-## 📦 Product Management
-
-Manage products, pricing, stock quantity, and product information.
-
-![Products](docs/screenshots/products.png)
-
-
----
-
-## 🏷️ Category & Supplier Management
-
-Organize products using categories and manage supplier information.
-
-![Categories](docs/screenshots/categories.png)
-
-![Suppliers](docs/screenshots/suppliers.png)
-
-
----
-
-## 💰 Sales and Purchase Management
-
-Track sales transactions, purchases, and business operations.
-
-![Sales](docs/screenshots/sales.png)
-
-![Purchases](docs/screenshots/purchases.png)
-
-
----
-
-## 📈 Profit Analytics
-
-Monitor revenue, costs, and profitability.
-
-![Profit](docs/screenshots/profit.png)
-
-
----
-
-## 🤖 AI Forecasting Analytics Dashboard ⭐
-
-AI-powered demand prediction, stock analysis, alerts, and recommendations.
-
-![AI Analytics](docs/screenshots/analytics-ai.png)
-
-
----
-
-## 📦 Stock Adjustment
-
-Manage inventory changes and stock corrections.
-
-![Stock Adjustment](docs/screenshots/stock-adjustment.png)
-
-
----
-
-## 👥 User Management
-
-Manage system users and access control.
-
-![Users](docs/screenshots/users.png)
-
-
----
-
-## 🔐 Activity Log
-
-Tracks important system activities for auditing and transparency.
-
-![Activity Log](docs/screenshots/activity-log.png)
 
 # 🎯 Technical Challenges Solved
 
