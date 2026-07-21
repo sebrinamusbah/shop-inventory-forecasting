@@ -40,7 +40,13 @@ This project addresses these challenges by combining an Inventory Management Sys
 The AI engine continuously analyzes historical sales data and inventory levels to help businesses make better inventory decisions.
 
 ---
+## 🌐 Live Demo
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-22c55e?style=for-the-badge&logo=render&logoColor=white)](https://your-laravel-app.onrender.com)
+
+> **Note:** This project is hosted on Render's free tier. The first request may take up to one minute while the service wakes up.
+
+---
 # 📸 System Screenshots
 
 ## 🏠 Welcome Page
